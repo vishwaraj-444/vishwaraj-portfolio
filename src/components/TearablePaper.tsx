@@ -138,7 +138,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       }
     }
 
+    let drawnRatio = 1;
     function draw() {
+      let drawn = 0;
       ctx!.clearRect(0, 0, w, h);
       ctx!.globalAlpha = fade;
       for (let r = 0; r < rows - 1; r++) {
@@ -151,6 +153,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
             Math.hypot(p2.x - p1.x, p2.y - p1.y),
           );
           if (maxEdge > TEAR_DISTANCE * 1.25) continue;
+          drawn++;
           // shading from local stretch -> curled-edge illusion
           const stretch = Math.min(1, Math.abs(maxEdge - Math.max(sx, sy)) / 22);
           const grain = ((c * 73 + r * 149) % 17) / 17;
@@ -170,18 +173,20 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         }
       }
       ctx!.globalAlpha = 1;
+      drawnRatio = drawn / ((rows - 1) * (cols - 1));
     }
 
     function loop(now: number) {
       const dt = Math.min((now - last) / 1000, 1 / 30);
       last = now;
       simulate(dt);
+      draw();
 
       if (!released && !tearStarted && brokenCount > 0) {
         tearStarted = true;
         setTearing(true);
       }
-      if (!released && brokenCount / totalConstraints > 0.16) {
+      if (!released && (brokenCount / totalConstraints > 0.16 || drawnRatio < 0.62)) {
         released = true;
         setTorn(true);
         for (const p of points) p.pinned = false;
@@ -199,7 +204,6 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
           return;
         }
       }
-      draw();
       raf = requestAnimationFrame(loop);
     }
 
