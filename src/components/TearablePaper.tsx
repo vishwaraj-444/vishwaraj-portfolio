@@ -160,6 +160,10 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
           ctx!.lineTo(p3.x, p3.y);
           ctx!.closePath();
           ctx!.fill();
+          // stroke with the same colour to close hairline seams between quads
+          ctx!.strokeStyle = ctx!.fillStyle as string;
+          ctx!.lineWidth = 1;
+          ctx!.stroke();
         }
       }
       ctx!.globalAlpha = 1;
@@ -208,8 +212,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       // drag: pull nearby points
       for (const pt of points) {
         const d = Math.hypot(pt.x - mx, pt.y - my);
-        if (d < 60) {
-          pt.pinned = false;
+        if (d < 60 && !pt.pinned) {
           pt.px = pt.x - (mx - pmx) * 0.9;
           pt.py = pt.y - (my - pmy) * 0.9;
           pt.x += (mx - pmx) * 0.5;
@@ -262,11 +265,21 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 select-none"
-      aria-hidden="true"
       style={{ touchAction: "none" }}
     >
       <canvas ref={canvasRef} className="block h-full w-full cursor-grab active:cursor-grabbing" />
       <div className="paper-grain pointer-events-none absolute inset-0" />
+      <button
+        type="button"
+        onClick={() => {
+          setTorn(true);
+          setGone(true);
+          onRevealed?.();
+        }}
+        className="paper-ink absolute right-5 top-5 rounded-full border border-black/10 bg-white/40 px-4 py-2 text-xs uppercase tracking-widest backdrop-blur-sm"
+      >
+        Skip intro
+      </button>
       {!torn && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
           <p className="paper-ink text-sm uppercase tracking-[0.45em]">Tear to enter</p>
