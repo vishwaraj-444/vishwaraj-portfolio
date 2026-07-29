@@ -186,7 +186,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         tearStarted = true;
         setTearing(true);
       }
-      if (!released && (brokenCount / totalConstraints > 0.16 || drawnRatio < 0.62)) {
+      if (!released && (brokenCount / totalConstraints > 0.16 || drawnRatio < 0.8)) {
         released = true;
         setTorn(true);
         for (const p of points) p.pinned = false;
