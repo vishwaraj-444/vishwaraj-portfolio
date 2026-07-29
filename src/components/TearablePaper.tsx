@@ -14,6 +14,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [gone, setGone] = useState(false);
   const [torn, setTorn] = useState(false);
+  const [tearing, setTearing] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,6 +40,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let raf = 0;
     let last = performance.now();
     let finished = false;
+    let tearStarted = false;
 
     const idx = (c: number, r: number) => r * cols + c;
 
@@ -175,7 +177,11 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       last = now;
       simulate(dt);
 
-      if (!released && brokenCount / totalConstraints > 0.3) {
+      if (!released && !tearStarted && brokenCount > 0) {
+        tearStarted = true;
+        setTearing(true);
+      }
+      if (!released && brokenCount / totalConstraints > 0.16) {
         released = true;
         setTorn(true);
         for (const p of points) p.pinned = false;
@@ -281,7 +287,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       >
         Skip intro
       </button>
-      {!torn && (
+      {!torn && !tearing && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
           <p className="paper-ink text-sm uppercase tracking-[0.45em]">Tear to enter</p>
           <p className="paper-ink-muted text-xs tracking-widest">drag across the paper</p>
