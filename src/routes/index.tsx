@@ -86,7 +86,10 @@ function Index() {
 
           <dl className="mt-16 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
             {stats.map((s) => (
-              <div key={s.label} className="glass rounded-2xl px-5 py-4 transition-transform duration-300 hover:-translate-y-1">
+              <div
+                key={s.label}
+                className="glass rounded-2xl px-5 py-4 transition-transform duration-300 hover:-translate-y-1"
+              >
                 <dt className="text-2xl font-semibold tracking-tight">{s.value}</dt>
                 <dd className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
                   {s.label}
@@ -102,7 +105,9 @@ function Index() {
         </section>
 
         <section className="relative mx-auto max-w-5xl px-6 pb-32">
-          <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Selected focus</h2>
+          <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
+            Selected focus
+          </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {[
               {

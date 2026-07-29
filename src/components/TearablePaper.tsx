@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 type Point = {
-  x: number; y: number; px: number; py: number; pinned: boolean;
+  x: number;
+  y: number;
+  px: number;
+  py: number;
+  pinned: boolean;
 };
 type Constraint = { a: number; b: number; len: number; alive: boolean };
 
@@ -28,7 +32,10 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let h = window.innerHeight;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    let cols = 0, rows = 0, sx = 0, sy = 0;
+    let cols = 0,
+      rows = 0,
+      sx = 0,
+      sy = 0;
     let points: Point[] = [];
     let constraints: Constraint[] = [];
     let totalConstraints = 1;
@@ -36,7 +43,10 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let fade = 1;
     let released = false;
     let dragging = false;
-    let mx = 0, my = 0, pmx = 0, pmy = 0;
+    let mx = 0,
+      my = 0,
+      pmx = 0,
+      pmy = 0;
     let raf = 0;
     let last = performance.now();
     let finished = false;
@@ -71,8 +81,10 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       }
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (c < cols - 1) constraints.push({ a: idx(c, r), b: idx(c + 1, r), len: sx, alive: true });
-          if (r < rows - 1) constraints.push({ a: idx(c, r), b: idx(c, r + 1), len: sy, alive: true });
+          if (c < cols - 1)
+            constraints.push({ a: idx(c, r), b: idx(c + 1, r), len: sx, alive: true });
+          if (r < rows - 1)
+            constraints.push({ a: idx(c, r), b: idx(c, r + 1), len: sy, alive: true });
         }
       }
       totalConstraints = constraints.length;
@@ -88,7 +100,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         const cx = (pa.x + pb.x) / 2;
         const cy = (pa.y + pb.y) / 2;
         // distance from segment (x0,y0)-(x1,y1)
-        const dx = x1 - x0, dy = y1 - y0;
+        const dx = x1 - x0,
+          dy = y1 - y0;
         const l2 = dx * dx + dy * dy || 1;
         let t = ((cx - x0) * dx + (cy - y0) * dy) / l2;
         t = Math.max(0, Math.min(1, t));
@@ -129,11 +142,17 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
             brokenCount++;
             continue;
           }
-          const diff = (dist - con.len) / dist * 0.5;
+          const diff = ((dist - con.len) / dist) * 0.5;
           dx *= diff;
           dy *= diff;
-          if (!(pa.pinned && !released)) { pa.x += dx; pa.y += dy; }
-          if (!(pb.pinned && !released)) { pb.x -= dx; pb.y -= dy; }
+          if (!(pa.pinned && !released)) {
+            pa.x += dx;
+            pa.y += dy;
+          }
+          if (!(pb.pinned && !released)) {
+            pb.x -= dx;
+            pb.y -= dy;
+          }
         }
       }
     }
@@ -143,8 +162,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       ctx!.globalAlpha = fade;
       for (let r = 0; r < rows - 1; r++) {
         for (let c = 0; c < cols - 1; c++) {
-          const i0 = idx(c, r), i1 = idx(c + 1, r), i2 = idx(c + 1, r + 1), i3 = idx(c, r + 1);
-          const p0 = points[i0], p1 = points[i1], p2 = points[i2], p3 = points[i3];
+          const i0 = idx(c, r),
+            i1 = idx(c + 1, r),
+            i2 = idx(c + 1, r + 1),
+            i3 = idx(c, r + 1);
+          const p0 = points[i0],
+            p1 = points[i1],
+            p2 = points[i2],
+            p3 = points[i3];
           const maxEdge = Math.max(
             Math.hypot(p1.x - p0.x, p1.y - p0.y),
             Math.hypot(p3.x - p0.x, p3.y - p0.y),
@@ -190,7 +215,12 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       if (released) {
         fade -= dt * 0.85;
         let offscreen = true;
-        for (const p of points) { if (p.y < h + 80) { offscreen = false; break; } }
+        for (const p of points) {
+          if (p.y < h + 80) {
+            offscreen = false;
+            break;
+          }
+        }
         if (fade <= 0 || offscreen) {
           if (!finished) {
             finished = true;
@@ -209,13 +239,17 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     const onDown = (e: PointerEvent) => {
       dragging = true;
       const p = pos(e);
-      mx = pmx = p.x; my = pmy = p.y;
+      mx = pmx = p.x;
+      my = pmy = p.y;
       canvas!.setPointerCapture(e.pointerId);
     };
     const onMove = (e: PointerEvent) => {
       if (!dragging) return;
       const p = pos(e);
-      pmx = mx; pmy = my; mx = p.x; my = p.y;
+      pmx = mx;
+      pmy = my;
+      mx = p.x;
+      my = p.y;
       // drag: pull nearby points
       for (const pt of points) {
         const d = Math.hypot(pt.x - mx, pt.y - my);
@@ -228,9 +262,13 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       }
       tearNear(pmx, pmy, mx, my);
     };
-    const onUp = () => { dragging = false; };
+    const onUp = () => {
+      dragging = false;
+    };
 
-    const onResize = () => { if (!released) build(); };
+    const onResize = () => {
+      if (!released) build();
+    };
 
     const skip = () => {
       if (finished) return;
@@ -270,10 +308,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   if (gone) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 select-none"
-      style={{ touchAction: "none" }}
-    >
+    <div className="fixed inset-0 z-50 select-none" style={{ touchAction: "none" }}>
       <canvas ref={canvasRef} className="block h-full w-full cursor-grab active:cursor-grabbing" />
       <div className="paper-grain pointer-events-none absolute inset-0" />
       <button
