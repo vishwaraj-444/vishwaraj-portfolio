@@ -182,6 +182,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       simulate(dt);
       draw();
 
+      (window as any).__tear = { broken: brokenCount, total: totalConstraints, drawnRatio, released };
       if (!released && !tearStarted && brokenCount > 0) {
         tearStarted = true;
         setTearing(true);
