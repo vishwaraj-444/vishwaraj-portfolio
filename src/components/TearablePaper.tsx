@@ -6,8 +6,8 @@ type Point = {
 type Constraint = { a: number; b: number; len: number; alive: boolean };
 
 const SPACING_TARGET = 26;
-const TEAR_DISTANCE = 62;
-const GRAVITY = 1200;
+const TEAR_DISTANCE = 95;
+const GRAVITY = 420;
 const FRICTION = 0.995;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
@@ -63,7 +63,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         for (let c = 0; c < cols; c++) {
           const x = c * sx;
           const y = r * sy;
-          points.push({ x, y, px: x, py: y, pinned: r === 0 });
+          const edge = r === 0 || r === rows - 1 || c === 0 || c === cols - 1;
+          points.push({ x, y, px: x, py: y, pinned: edge });
         }
       }
       for (let r = 0; r < rows; r++) {
@@ -112,7 +113,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         p.x += vx;
         p.y += vy + g * dt * dt;
       }
-      const iterations = 3;
+      const iterations = released ? 2 : 6;
       for (let i = 0; i < iterations; i++) {
         for (const con of constraints) {
           if (!con.alive) continue;
@@ -174,7 +175,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       last = now;
       simulate(dt);
 
-      if (!released && brokenCount / totalConstraints > 0.34) {
+      if (!released && brokenCount / totalConstraints > 0.3) {
         released = true;
         setTorn(true);
         for (const p of points) p.pinned = false;
