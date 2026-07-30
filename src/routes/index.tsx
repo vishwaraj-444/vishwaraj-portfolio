@@ -319,8 +319,8 @@ function Index() {
             <ul className="glass space-y-3 rounded-3xl p-6 text-sm">
               {[
                 ["Currently", "Building applied AI systems"],
-                ["Based in", "Bengaluru, remote-friendly"],
-                ["Toolkit", "TypeScript, Python, Go, Postgres"],
+                ["Email", "vishwarajsurthi@gmail.com"],
+                ["Toolkit", "TypeScript, Python, C#/.NET, Postgres"],
                 ["Interests", "Retrieval, evals, interface craft"],
               ].map(([k, v]) => (
                 <li key={k} className="flex flex-col gap-0.5">
@@ -334,13 +334,43 @@ function Index() {
           </div>
         </section>
 
+        <section id="skills" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+          <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Skills</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {skillGroups.map((g) => (
+              <article key={g.title} className="glass rounded-3xl p-6">
+                <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {g.title}
+                </h3>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {g.key.map((s) => (
+                    <li
+                      key={s}
+                      className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-foreground"
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {g.skills.join(" · ")}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="projects" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Projects</h2>
+          <p className="mt-3 text-sm text-muted-foreground">Select a project for the details.</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {projects.map((p) => (
-              <article
+              <button
                 key={p.title}
-                className="glass group rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
+                type="button"
+                onClick={() => setActive(p)}
+                aria-haspopup="dialog"
+                className="glass group rounded-3xl p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-baseline justify-between gap-4">
                   <h3 className="text-lg font-medium">{p.title}</h3>
@@ -359,7 +389,7 @@ function Index() {
                     </li>
                   ))}
                 </ul>
-              </article>
+              </button>
             ))}
           </div>
         </section>
@@ -390,6 +420,8 @@ function Index() {
           </div>
         </section>
       </main>
+
+      <ProjectModal project={active} onClose={closeModal} />
     </>
   );
 }
