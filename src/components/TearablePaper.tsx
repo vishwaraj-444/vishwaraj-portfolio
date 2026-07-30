@@ -78,6 +78,11 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let finished = false;
     let tearStarted = false;
     let time = 0;
+    // bounding box of the rip -> release once the slash runs across the sheet
+    let ripMinX = Infinity;
+    let ripMinY = Infinity;
+    let ripMaxX = -Infinity;
+    let ripMaxY = -Infinity;
 
     const buckets: Path2D[] = [];
 
@@ -185,6 +190,12 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       const b = links[k * 2 + 1];
       degree[a]--;
       degree[b]--;
+      const mxp = (px[a] + px[b]) * 0.5;
+      const myp = (py[a] + py[b]) * 0.5;
+      if (mxp < ripMinX) ripMinX = mxp;
+      if (mxp > ripMaxX) ripMaxX = mxp;
+      if (myp < ripMinY) ripMinY = myp;
+      if (myp > ripMaxY) ripMaxY = myp;
       // stress concentrates at the tip of the rip: the threads still holding
       // at that node give way sooner, so the tear runs instead of pitting
       for (let s = 0; s < ptCount[a]; s++) {
@@ -231,7 +242,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     }
 
     function step(dt: number) {
-      const g = released ? GRAVITY * 1.7 : GRAVITY;
+      const g = released ? GRAVITY * 1.7 : tearStarted ? GRAVITY * 1.35 : GRAVITY;
       const gdt = g * dt * dt;
       const n = px.length;
       // after release: per-piece flutter (air catching the fabric) so the
@@ -448,7 +459,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         }
       }
       // the sheet only gives way once a genuinely large rip has opened up
-      if (!released && brokenCount > linkCount * 0.035) {
+      const ripSpan =
+        brokenCount > 0 ? Math.hypot(ripMaxX - ripMinX, ripMaxY - ripMinY) : 0;
+      if (!released && (brokenCount > linkCount * 0.035 || ripSpan > Math.hypot(w, h) * 0.42)) {
         released = true;
         setTorn(true);
         pinned.fill(0);
