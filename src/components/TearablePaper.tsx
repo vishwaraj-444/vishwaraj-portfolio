@@ -165,7 +165,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     }
 
     function tearNear(x0: number, y0: number, x1: number, y1: number) {
-      const radius = 26;
+      // small direct cut radius: most of the tear comes from strain
+      // propagating through the weave, not from the cursor slicing links
+      const radius = 13;
       const dx = x1 - x0;
       const dy = y1 - y0;
       const l2 = dx * dx + dy * dy || 1;
@@ -182,8 +184,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         const d = Math.hypot(ddx, ddy);
         // multi-octave jitter -> ragged, fibre-following tear edge
         const jitter =
-          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 6 +
-          Math.sin(cx * 0.61 + cy * 0.43) * 3.5;
+          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 5 +
+          Math.sin(cx * 0.61 + cy * 0.43) * 3;
         if (d < radius + jitter) breakLink(k);
       }
     }
@@ -367,7 +369,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         pinned.fill(0);
       }
       if (released) {
-        fade -= frame * 0.85;
+        fade -= frame * 0.62;
         let offscreen = true;
         for (let i = 0; i < py.length; i++) {
           if (py[i] < h + 80) {
@@ -401,17 +403,19 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       my = e.clientY;
       const dx = mx - pmx;
       const dy = my - pmy;
-      for (let i = 0; i < px.length; i++) {
-        if (pinned[i]) continue;
-        const d = Math.hypot(px[i] - mx, py[i] - my);
-        if (d < 55) {
-          const falloff = 1 - d / 55;
-          ox[i] = px[i] - dx * 0.9 * falloff;
-          oy[i] = py[i] - dy * 0.9 * falloff;
-          px[i] += dx * 0.55 * falloff;
-          py[i] += dy * 0.55 * falloff;
+        const grab = 78;
+        for (let i = 0; i < px.length; i++) {
+          if (pinned[i]) continue;
+          const d = Math.hypot(px[i] - mx, py[i] - my);
+          if (d < grab) {
+            const f = 1 - d / grab;
+            const falloff = f * f * (3 - 2 * f); // smooth grab -> no rubbery snap
+            ox[i] = px[i] - dx * 0.95 * falloff;
+            oy[i] = py[i] - dy * 0.95 * falloff;
+            px[i] += dx * 0.8 * falloff;
+            py[i] += dy * 0.8 * falloff;
+          }
         }
-      }
       tearNear(pmx, pmy, mx, my);
     };
     const onUp = () => {
