@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 // solver cost) stays roughly constant across desktop and mobile.
 const TARGET_CELLS = 8200;
 const MIN_SPACING = 10;
-const TEAR_STRAIN = 2.15; // silk stretches a lot before the weave gives way
+const TEAR_STRAIN = 2.4; // silk stretches a lot before the weave gives way
 const STIFFNESS = 0.62; // <1 = soft, elastic weave (never rubbery: strain-limited)
 const GRAVITY = 470;
 const FRICTION = 0.991; // air drag on a light fabric
@@ -12,7 +12,8 @@ const FIXED_DT = 1 / 100;
 const SHADE_BUCKETS = 48;
 // how much neighbouring threads are weakened once a thread snaps: this is what
 // turns isolated breaks into a crack that runs through the weave
-const CRACK_WEAKEN = 0.74;
+const CRACK_WEAKEN = 0.9;
+const MIN_TEAR = 1.45; // threads never get weaker than this multiple of rest
 const GRAB_RADIUS = 86;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
@@ -188,11 +189,13 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       // at that node give way sooner, so the tear runs instead of pitting
       for (let s = 0; s < ptCount[a]; s++) {
         const j = ptLinks[a * 8 + s];
-        if (j >= 0 && linkAlive[j]) linkTear[j] *= CRACK_WEAKEN;
+        if (j >= 0 && linkAlive[j])
+          linkTear[j] = Math.max(linkLen[j] * MIN_TEAR, linkTear[j] * CRACK_WEAKEN);
       }
       for (let s = 0; s < ptCount[b]; s++) {
         const j = ptLinks[b * 8 + s];
-        if (j >= 0 && linkAlive[j]) linkTear[j] *= CRACK_WEAKEN;
+        if (j >= 0 && linkAlive[j])
+          linkTear[j] = Math.max(linkLen[j] * MIN_TEAR, linkTear[j] * CRACK_WEAKEN);
       }
       brokenCount++;
     }
@@ -219,7 +222,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       if (!dragging || grabN === 0) return;
       for (let s = 0; s < grabN; s++) {
         const i = grabIdx[s];
-        const wgt = grabW[s] * 0.42;
+        const wgt = grabW[s] * 0.26;
         px[i] += (tx - px[i]) * wgt;
         py[i] += (ty - py[i]) * wgt;
       }
