@@ -5,7 +5,7 @@ const TEAR_DISTANCE = 46;
 const GRAVITY = 520;
 const FRICTION = 0.996;
 const FIXED_DT = 1 / 120; // fixed-step verlet for stable, deterministic physics
-const SHADE_BUCKETS = 26;
+const SHADE_BUCKETS = 40;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -259,8 +259,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
             0.9 +
             skew * 0.42 + // directional lighting from slope
             (compression - 1) * 0.55 + // shadow where the sheet folds/curls
-            fiber[i0] * 0.035 + // fibre grain
-            (((c * 73 + r * 149) % 17) / 17 - 0.5) * 0.02;
+            fiber[i0] * 0.018 + // fibre grain
+            (((c * 73 + r * 149) % 17) / 17 - 0.5) * 0.008;
 
           if (curl) light += 0.16 - compression * 0.1; // bright lip on curled torn edge
 
