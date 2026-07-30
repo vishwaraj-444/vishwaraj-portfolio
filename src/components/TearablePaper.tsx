@@ -446,6 +446,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         steps++;
       }
       draw();
+      (window as any).__tear = { brokenCount, linkCount, ripSpan: Math.hypot(ripMaxX - ripMinX, ripMaxY - ripMinY) };
 
       if (!released && !tearStarted && brokenCount > 0) {
         tearStarted = true;
