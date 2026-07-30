@@ -207,7 +207,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     function grabAt(x: number, y: number) {
       grabN = 0;
       for (let i = 0; i < px.length; i++) {
-        if (pinned[i]) continue;
+        // only fabric still attached to the weave can be pulled on; loose
+        // scraps are left to fall
+        if (pinned[i] || degree[i] === 0) continue;
         const d = Math.hypot(px[i] - x, py[i] - y);
         if (d < GRAB_RADIUS) {
           const f = 1 - d / GRAB_RADIUS;
@@ -350,9 +352,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
             light += 0.2 - compression * 0.22;
           }
 
-          light = light < 0.3 ? 0.3 : light > 1.18 ? 1.18 : light;
+          light = light < 0.3 ? 0.3 : light > 1.08 ? 1.08 : light;
 
-          let bucket = Math.round(((light - 0.3) / (1.18 - 0.3)) * (SHADE_BUCKETS - 1));
+          let bucket = Math.round(((light - 0.3) / (1.08 - 0.3)) * (SHADE_BUCKETS - 1));
           bucket = bucket < 0 ? 0 : bucket > SHADE_BUCKETS - 1 ? SHADE_BUCKETS - 1 : bucket;
 
           const p = buckets[bucket];
@@ -367,7 +369,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       ctx!.lineWidth = 1;
       ctx!.lineJoin = "round";
       for (let i = 0; i < SHADE_BUCKETS; i++) {
-        const t = 0.3 + (i / (SHADE_BUCKETS - 1)) * (1.18 - 0.3);
+        const t = 0.3 + (i / (SHADE_BUCKETS - 1)) * (1.08 - 0.3);
         // pearl silk: shadows go cool, highlights bloom warm-white
         const l = Math.min(253, 228 * t);
         const warm = Math.max(0, t - 0.95) * 40;
@@ -482,6 +484,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       my = e.clientY;
       tx = mx;
       ty = my;
+      // keep picking up whatever fabric is under the cursor so a sweeping
+      // drag keeps driving the rip forward instead of dying with the scrap
+      grabAt(mx, my);
     };
     const onUp = () => {
       dragging = false;
