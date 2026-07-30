@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-const SPACING_TARGET = 15; // denser mesh -> finer, more organic tears
-const TEAR_DISTANCE = 46;
-const GRAVITY = 520;
-const FRICTION = 0.996;
-const FIXED_DT = 1 / 120; // fixed-step verlet for stable, deterministic physics
-const SHADE_BUCKETS = 40;
+// Mesh density adapts to viewport area so the cell count (and therefore the
+// solver cost) stays roughly constant across desktop and mobile.
+const TARGET_CELLS = 7600;
+const MIN_SPACING = 11;
+const TEAR_STRAIN = 2.35; // silk stretches a lot before the weave gives way
+const STIFFNESS = 0.58; // <1 = soft, elastic weave (never rubbery: strain-limited)
+const GRAVITY = 470;
+const FRICTION = 0.991; // air drag on a light fabric
+const FIXED_DT = 1 / 100;
+const SHADE_BUCKETS = 48;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -38,6 +42,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let pinned = new Uint8Array(0);
     let links = new Int32Array(0); // [a, b] pairs
     let linkLen = new Float32Array(0);
+    let linkTear = new Float32Array(0); // per-link tear threshold -> organic rip path
     let linkAlive = new Uint8Array(0);
     let degree = new Uint8Array(0); // remaining links per point -> curl detection
     let baseDegree = new Uint8Array(0);
@@ -57,6 +62,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let acc = 0;
     let finished = false;
     let tearStarted = false;
+    let time = 0;
 
     const buckets: Path2D[] = [];
 
@@ -72,8 +78,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       canvas!.style.height = h + "px";
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      cols = Math.max(16, Math.round(w / SPACING_TARGET)) + 1;
-      rows = Math.max(16, Math.round(h / SPACING_TARGET)) + 1;
+      const spacing = Math.max(MIN_SPACING, Math.sqrt((w * h) / TARGET_CELLS));
+      cols = Math.max(16, Math.round(w / spacing)) + 1;
+      rows = Math.max(16, Math.round(h / spacing)) + 1;
       sx = w / (cols - 1);
       sy = h / (rows - 1);
 
@@ -107,6 +114,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       const maxLinks = n * 4;
       links = new Int32Array(maxLinks * 2);
       linkLen = new Float32Array(maxLinks);
+      linkTear = new Float32Array(maxLinks);
       linkAlive = new Uint8Array(maxLinks);
       linkCount = 0;
 
@@ -115,6 +123,17 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         links[linkCount * 2] = a;
         links[linkCount * 2 + 1] = b;
         linkLen[linkCount] = len;
+        // weave strength varies along the grain -> the rip wanders instead of
+        // running dead straight
+        const wx = (px[a] + px[b]) * 0.5;
+        const wy = (py[a] + py[b]) * 0.5;
+        linkTear[linkCount] =
+          len *
+          TEAR_STRAIN *
+          (1 +
+            Math.sin(wx * 0.07 + Math.cos(wy * 0.031) * 2.4) * 0.16 +
+            Math.sin(wy * 0.21 - wx * 0.013) * 0.1 +
+            Math.sin(wx * 0.83 + wy * 0.57) * 0.05);
         linkAlive[linkCount] = 1;
         degree[a]++;
         degree[b]++;
@@ -146,7 +165,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     }
 
     function tearNear(x0: number, y0: number, x1: number, y1: number) {
-      const radius = 26;
+      // small direct cut radius: most of the tear comes from strain
+      // propagating through the weave, not from the cursor slicing links
+      const radius = 13;
       const dx = x1 - x0;
       const dy = y1 - y0;
       const l2 = dx * dx + dy * dy || 1;
@@ -163,8 +184,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         const d = Math.hypot(ddx, ddy);
         // multi-octave jitter -> ragged, fibre-following tear edge
         const jitter =
-          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 6 +
-          Math.sin(cx * 0.61 + cy * 0.43) * 3.5;
+          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 5 +
+          Math.sin(cx * 0.61 + cy * 0.43) * 3;
         if (d < radius + jitter) breakLink(k);
       }
     }
@@ -173,16 +194,24 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       const g = released ? GRAVITY * 1.7 : GRAVITY;
       const gdt = g * dt * dt;
       const n = px.length;
+      // after release: per-piece flutter (air catching the fabric) so the
+      // shreds sway and rotate on the way down instead of dropping like bricks
+      const flutter = released ? 1 : 0;
       for (let i = 0; i < n; i++) {
         if (pinned[i] && !released) continue;
         const vx = (px[i] - ox[i]) * FRICTION;
         const vy = (py[i] - oy[i]) * FRICTION;
         ox[i] = px[i];
         oy[i] = py[i];
-        px[i] += vx;
+        let ax = 0;
+        if (flutter) {
+          const phase = time * 2.6 + px[i] * 0.012 + py[i] * 0.007;
+          ax = (Math.sin(phase) + Math.sin(phase * 1.83 + 1.1) * 0.5) * 320 * dt * dt;
+        }
+        px[i] += vx + ax;
         py[i] += vy + gdt;
       }
-      const iterations = released ? 2 : 4;
+      const iterations = released ? 2 : 5;
       for (let it = 0; it < iterations; it++) {
         for (let k = 0; k < linkCount; k++) {
           if (!linkAlive[k]) continue;
@@ -191,11 +220,16 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
           let dx = px[b] - px[a];
           let dy = py[b] - py[a];
           const dist = Math.hypot(dx, dy) || 0.0001;
-          if (dist > TEAR_DISTANCE) {
+          if (dist > linkTear[k]) {
             breakLink(k);
             continue;
           }
-          const diff = ((dist - linkLen[k]) / dist) * 0.5;
+          const rest = linkLen[k];
+          // soft, non-linear response: gentle near rest (silk drapes and
+          // wrinkles), rapidly stiffening as the weave approaches its limit
+          const strain = dist / rest;
+          const k2 = STIFFNESS + (strain > 1 ? Math.min(0.4, (strain - 1) * 0.45) : 0);
+          const diff = ((dist - rest) / dist) * 0.5 * k2;
           dx *= diff;
           dy *= diff;
           if (!(pinned[a] && !released)) {
@@ -217,7 +251,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       for (let i = 0; i < SHADE_BUCKETS; i++) buckets[i] = new Path2D();
 
       const restArea = sx * sy;
-      const cull = TEAR_DISTANCE * 1.25;
+      const cull = Math.max(sx, sy) * TEAR_STRAIN * 1.3;
 
       for (let r = 0; r < rows - 1; r++) {
         for (let c = 0; c < cols - 1; c++) {
@@ -255,18 +289,31 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
               ? 1
               : 0;
 
+          // wrinkle term: axis-asymmetric stretch reads as a fold running
+          // through the weave, which is what gives silk its rippling sheen
+          const stretchU = Math.hypot(e1x, e1y) / (sx || 1);
+          const stretchV = Math.hypot(e2x, e2y) / (sy || 1);
+          const wrinkle = (stretchU - stretchV) * 0.5;
+
           let light =
             0.9 +
-            skew * 0.42 + // directional lighting from slope
-            (compression - 1) * 0.55 + // shadow where the sheet folds/curls
-            fiber[i0] * 0.018 + // fibre grain
-            (((c * 73 + r * 149) % 17) / 17 - 0.5) * 0.008;
+            skew * 0.5 + // directional lighting from slope
+            (compression - 1) * 0.62 + // shadow in folds and curls
+            wrinkle * 0.34 + // soft highlight along wrinkle ridges
+            fiber[i0] * 0.022 + // woven grain
+            (((c * 73 + r * 149) % 17) / 17 - 0.5) * 0.006;
 
-          if (curl) light += 0.16 - compression * 0.1; // bright lip on curled torn edge
+          // anisotropic sheen: silk flares bright at grazing slopes
+          light += Math.abs(skew) > 0.12 ? Math.min(0.12, (Math.abs(skew) - 0.12) * 0.5) : 0;
 
-          light = light < 0.35 ? 0.35 : light > 1.12 ? 1.12 : light;
+          if (curl) {
+            // torn edge: bright lit lip with a deeper shadow just behind it
+            light += 0.2 - compression * 0.22;
+          }
 
-          let bucket = Math.round(((light - 0.35) / (1.12 - 0.35)) * (SHADE_BUCKETS - 1));
+          light = light < 0.3 ? 0.3 : light > 1.18 ? 1.18 : light;
+
+          let bucket = Math.round(((light - 0.3) / (1.18 - 0.3)) * (SHADE_BUCKETS - 1));
           bucket = bucket < 0 ? 0 : bucket > SHADE_BUCKETS - 1 ? SHADE_BUCKETS - 1 : bucket;
 
           const p = buckets[bucket];
@@ -281,9 +328,15 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       ctx!.lineWidth = 1;
       ctx!.lineJoin = "round";
       for (let i = 0; i < SHADE_BUCKETS; i++) {
-        const t = 0.35 + (i / (SHADE_BUCKETS - 1)) * (1.12 - 0.35);
-        const l = Math.min(252, 232 * t);
-        const color = `rgb(${l | 0}, ${(l - 3) | 0}, ${(l - 11) | 0})`;
+        const t = 0.3 + (i / (SHADE_BUCKETS - 1)) * (1.18 - 0.3);
+        // pearl silk: shadows go cool, highlights bloom warm-white
+        const l = Math.min(253, 228 * t);
+        const warm = Math.max(0, t - 0.95) * 40;
+        const cool = Math.max(0, 0.95 - t) * 18;
+        const rC = Math.min(255, l + warm);
+        const gC = Math.min(255, l - 2 + warm * 0.7);
+        const bC = Math.min(255, l - 9 + cool + warm * 0.3);
+        const color = `rgb(${rC | 0}, ${gC | 0}, ${bC | 0})`;
         ctx!.fillStyle = color;
         ctx!.strokeStyle = color; // closes hairline seams between quads
         ctx!.fill(buckets[i]);
@@ -296,6 +349,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       let frame = (now - last) / 1000;
       last = now;
       if (frame > 0.05) frame = 0.05;
+      time += frame;
       acc += frame;
       let steps = 0;
       while (acc >= FIXED_DT && steps < 6) {
@@ -315,7 +369,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         pinned.fill(0);
       }
       if (released) {
-        fade -= frame * 0.85;
+        fade -= frame * 0.62;
         let offscreen = true;
         for (let i = 0; i < py.length; i++) {
           if (py[i] < h + 80) {
@@ -349,17 +403,19 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       my = e.clientY;
       const dx = mx - pmx;
       const dy = my - pmy;
-      for (let i = 0; i < px.length; i++) {
-        if (pinned[i]) continue;
-        const d = Math.hypot(px[i] - mx, py[i] - my);
-        if (d < 55) {
-          const falloff = 1 - d / 55;
-          ox[i] = px[i] - dx * 0.9 * falloff;
-          oy[i] = py[i] - dy * 0.9 * falloff;
-          px[i] += dx * 0.55 * falloff;
-          py[i] += dy * 0.55 * falloff;
+        const grab = 78;
+        for (let i = 0; i < px.length; i++) {
+          if (pinned[i]) continue;
+          const d = Math.hypot(px[i] - mx, py[i] - my);
+          if (d < grab) {
+            const f = 1 - d / grab;
+            const falloff = f * f * (3 - 2 * f); // smooth grab -> no rubbery snap
+            ox[i] = px[i] - dx * 0.95 * falloff;
+            oy[i] = py[i] - dy * 0.95 * falloff;
+            px[i] += dx * 0.8 * falloff;
+            py[i] += dy * 0.8 * falloff;
+          }
         }
-      }
       tearNear(pmx, pmy, mx, my);
     };
     const onUp = () => {

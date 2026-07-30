@@ -2,21 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { ArrowDown, ArrowUpRight, FileText, Mail } from "lucide-react";
 import { TearablePaper } from "@/components/TearablePaper";
+import { ProjectModal, type Project } from "@/components/ProjectModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aarav Mehta — Software & AI Engineer Portfolio" },
+      { title: "Vishwaraj Surthi — Software & AI Engineer Portfolio" },
       {
         name: "description",
         content:
-          "Portfolio of Aarav Mehta, a software and AI engineer building fast, thoughtful products, applied ML systems and delightful interfaces.",
+          "Portfolio of Vishwaraj Surthi, a software and AI engineer building fast, thoughtful products, applied AI systems and delightful interfaces.",
       },
-      { property: "og:title", content: "Aarav Mehta — Software & AI Engineer" },
+      { property: "og:title", content: "Vishwaraj Surthi — Software & AI Engineer" },
       {
         property: "og:description",
         content:
-          "Software and AI engineer building fast, thoughtful products, applied ML systems and delightful interfaces.",
+          "Software and AI engineer building fast, thoughtful products, applied AI systems and delightful interfaces.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -31,41 +32,173 @@ const stats = [
   { value: "3", label: "Patents & papers" },
 ];
 
-const projects = [
+const projects: Project[] = [
   {
     title: "Retrieval platform",
     year: "2025",
+    role: "Applied AI engineering",
     body: "Hybrid vector + lexical search with an evaluation harness, serving sub-120ms answers over millions of documents.",
     tags: ["Python", "pgvector", "Rust"],
+    details: [
+      "Retrieval-Augmented Generation pipeline on Azure OpenAI and Azure AI Search with grounded citations.",
+      "Hybrid ranking blending dense vectors with BM25, tuned against a regression-tested eval harness.",
+      "Caching and query-plan optimisation held p95 latency under 120ms at millions of documents.",
+    ],
   },
   {
     title: "Agent workbench",
     year: "2024",
+    role: "Platform engineering",
     body: "Tool-calling agent runtime with deterministic replay, tracing and cost budgets baked into every run.",
     tags: ["TypeScript", "LLMs", "OTel"],
+    details: [
+      "Deterministic replay of every tool call, so failures can be reproduced exactly from a trace ID.",
+      "OpenTelemetry spans plus per-run token and cost budgets surfaced in Datadog dashboards.",
+      "NestJS control plane with a typed React 18 + TanStack Query console.",
+    ],
   },
   {
     title: "Realtime edge API",
     year: "2024",
+    role: "Distributed systems",
     body: "Globally distributed streaming API handling bursty traffic with a typed end-to-end contract.",
     tags: ["Go", "Edge", "gRPC"],
+    details: [
+      "WebSocket fan-out backed by Kafka topics with at-least-once delivery and idempotent consumers.",
+      "Deployed across AWS Lambda, EKS and CloudFront with autoscaling for 10x traffic spikes.",
+      "OpenAPI-first contract shared by every client, validated in CI on each pull request.",
+    ],
   },
   {
     title: "Vision QA pipeline",
     year: "2023",
+    role: "ML systems",
     body: "On-device inference plus an active-learning loop that cut manual labelling effort by two thirds.",
     tags: ["PyTorch", "ONNX", "MLOps"],
+    details: [
+      "ONNX-exported models running on-device with a quantised fallback path for low-end hardware.",
+      "Active-learning loop surfacing only uncertain samples, cutting labelling effort by ~66%.",
+      "Containerised training and evaluation jobs orchestrated through GitHub Actions and Kubernetes.",
+    ],
+  },
+];
+
+const skillGroups: { title: string; skills: string[]; key: string[] }[] = [
+  {
+    title: "Languages & runtimes",
+    key: ["TypeScript", "Python", "C# / .NET"],
+    skills: ["JavaScript", "ASP.NET Core", "Node.js", "Java"],
+  },
+  {
+    title: "Frontend",
+    key: ["React 18", "Next.js"],
+    skills: [
+      "Redux Toolkit",
+      "React Query / TanStack Query",
+      "Apollo Client",
+      "Angular",
+      "Material UI",
+      "HTML5",
+      "CSS3",
+    ],
+  },
+  {
+    title: "Backend & APIs",
+    key: ["NestJS", "GraphQL"],
+    skills: [
+      "Express.js",
+      "FastAPI",
+      "Spring Boot",
+      "REST",
+      "SOAP / WSDL",
+      "Microservices",
+      "API design",
+      "OpenAPI / Swagger",
+    ],
+  },
+  {
+    title: "AI & intelligent apps",
+    key: ["Azure OpenAI", "RAG"],
+    skills: [
+      "Azure AI Search",
+      "AI-assisted patient summarisation",
+      "Context-aware recommendations",
+    ],
+  },
+  {
+    title: "Data & messaging",
+    key: ["PostgreSQL", "Apache Kafka"],
+    skills: [
+      "MySQL",
+      "MongoDB",
+      "Redis",
+      "WebSockets",
+      "Data modeling",
+      "Caching",
+      "Query optimization",
+    ],
+  },
+  {
+    title: "Cloud & DevOps",
+    key: ["AWS", "Kubernetes"],
+    skills: [
+      "Lambda",
+      "EKS",
+      "S3",
+      "CloudFront",
+      "CloudWatch",
+      "API Gateway",
+      "Azure Container Apps",
+      "Docker",
+      "GitHub Actions",
+      "Jenkins",
+      "CI/CD",
+    ],
+  },
+  {
+    title: "Security",
+    key: ["OAuth 2.0", "Zero Trust"],
+    skills: ["OpenID Connect", "JWT", "Azure Entra ID", "RBAC"],
+  },
+  {
+    title: "Testing & observability",
+    key: ["Playwright", "OpenTelemetry"],
+    skills: [
+      "Jest",
+      "JUnit",
+      "React Testing Library",
+      "Cypress",
+      "Datadog",
+      "CloudWatch",
+      "Structured logging",
+      "Monitoring",
+      "Incident response",
+    ],
+  },
+  {
+    title: "System design",
+    key: ["Distributed systems", "Scalability"],
+    skills: [
+      "Data structures",
+      "Algorithms",
+      "Caching strategies",
+      "Performance optimization",
+      "Resource optimization",
+    ],
   },
 ];
 
 const navLinks = [
   { href: "#about", label: "About" },
+  { href: "#skills", label: "Skills" },
   { href: "#projects", label: "Projects" },
 ];
 
 function Index() {
   const [revealed, setRevealed] = useState(false);
+  const [active, setActive] = useState<Project | null>(null);
   const onRevealed = useCallback(() => setRevealed(true), []);
+  const closeModal = useCallback(() => setActive(null), []);
 
   return (
     <>
@@ -84,7 +217,7 @@ function Index() {
               href="#top"
               className="glass rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.25em]"
             >
-              AM
+              VS
             </a>
             <div className="glass flex items-center gap-1 rounded-full p-1">
               {navLinks.map((l) => (
@@ -97,7 +230,7 @@ function Index() {
                 </a>
               ))}
               <a
-                href="mailto:hello@aaravmehta.dev"
+                href="mailto:vishwarajsurthi@gmail.com"
                 className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground"
               >
                 Contact
@@ -118,7 +251,7 @@ function Index() {
           </span>
 
           <h1 className="mt-8 text-balance text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-            Aarav Mehta
+            Vishwaraj Surthi
           </h1>
           <p className="gradient-text mt-4 text-xl font-medium sm:text-2xl">
             Software Engineer / AI Engineer
@@ -140,7 +273,7 @@ function Index() {
               <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
             <a
-              href="mailto:hello@aaravmehta.dev"
+              href="mailto:vishwarajsurthi@gmail.com"
               className="btn-ghost group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
             >
               <Mail className="size-4" aria-hidden="true" />
@@ -186,8 +319,8 @@ function Index() {
             <ul className="glass space-y-3 rounded-3xl p-6 text-sm">
               {[
                 ["Currently", "Building applied AI systems"],
-                ["Based in", "Bengaluru, remote-friendly"],
-                ["Toolkit", "TypeScript, Python, Go, Postgres"],
+                ["Email", "vishwarajsurthi@gmail.com"],
+                ["Toolkit", "TypeScript, Python, C#/.NET, Postgres"],
                 ["Interests", "Retrieval, evals, interface craft"],
               ].map(([k, v]) => (
                 <li key={k} className="flex flex-col gap-0.5">
@@ -201,13 +334,43 @@ function Index() {
           </div>
         </section>
 
+        <section id="skills" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+          <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Skills</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {skillGroups.map((g) => (
+              <article key={g.title} className="glass rounded-3xl p-6">
+                <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {g.title}
+                </h3>
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {g.key.map((s) => (
+                    <li
+                      key={s}
+                      className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-foreground"
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {g.skills.join(" · ")}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="projects" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Projects</h2>
+          <p className="mt-3 text-sm text-muted-foreground">Select a project for the details.</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {projects.map((p) => (
-              <article
+              <button
                 key={p.title}
-                className="glass group rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
+                type="button"
+                onClick={() => setActive(p)}
+                aria-haspopup="dialog"
+                className="glass group rounded-3xl p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-baseline justify-between gap-4">
                   <h3 className="text-lg font-medium">{p.title}</h3>
@@ -226,7 +389,7 @@ function Index() {
                     </li>
                   ))}
                 </ul>
-              </article>
+              </button>
             ))}
           </div>
         </section>
@@ -257,6 +420,8 @@ function Index() {
           </div>
         </section>
       </main>
+
+      <ProjectModal project={active} onClose={closeModal} />
     </>
   );
 }
