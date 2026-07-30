@@ -2,21 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { ArrowDown, ArrowUpRight, FileText, Mail } from "lucide-react";
 import { TearablePaper } from "@/components/TearablePaper";
+import { ProjectModal, type Project } from "@/components/ProjectModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aarav Mehta — Software & AI Engineer Portfolio" },
+      { title: "Vishwaraj Surthi — Software & AI Engineer Portfolio" },
       {
         name: "description",
         content:
-          "Portfolio of Aarav Mehta, a software and AI engineer building fast, thoughtful products, applied ML systems and delightful interfaces.",
+          "Portfolio of Vishwaraj Surthi, a software and AI engineer building fast, thoughtful products, applied AI systems and delightful interfaces.",
       },
-      { property: "og:title", content: "Aarav Mehta — Software & AI Engineer" },
+      { property: "og:title", content: "Vishwaraj Surthi — Software & AI Engineer" },
       {
         property: "og:description",
         content:
-          "Software and AI engineer building fast, thoughtful products, applied ML systems and delightful interfaces.",
+          "Software and AI engineer building fast, thoughtful products, applied AI systems and delightful interfaces.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -31,41 +32,173 @@ const stats = [
   { value: "3", label: "Patents & papers" },
 ];
 
-const projects = [
+const projects: Project[] = [
   {
     title: "Retrieval platform",
     year: "2025",
+    role: "Applied AI engineering",
     body: "Hybrid vector + lexical search with an evaluation harness, serving sub-120ms answers over millions of documents.",
     tags: ["Python", "pgvector", "Rust"],
+    details: [
+      "Retrieval-Augmented Generation pipeline on Azure OpenAI and Azure AI Search with grounded citations.",
+      "Hybrid ranking blending dense vectors with BM25, tuned against a regression-tested eval harness.",
+      "Caching and query-plan optimisation held p95 latency under 120ms at millions of documents.",
+    ],
   },
   {
     title: "Agent workbench",
     year: "2024",
+    role: "Platform engineering",
     body: "Tool-calling agent runtime with deterministic replay, tracing and cost budgets baked into every run.",
     tags: ["TypeScript", "LLMs", "OTel"],
+    details: [
+      "Deterministic replay of every tool call, so failures can be reproduced exactly from a trace ID.",
+      "OpenTelemetry spans plus per-run token and cost budgets surfaced in Datadog dashboards.",
+      "NestJS control plane with a typed React 18 + TanStack Query console.",
+    ],
   },
   {
     title: "Realtime edge API",
     year: "2024",
+    role: "Distributed systems",
     body: "Globally distributed streaming API handling bursty traffic with a typed end-to-end contract.",
     tags: ["Go", "Edge", "gRPC"],
+    details: [
+      "WebSocket fan-out backed by Kafka topics with at-least-once delivery and idempotent consumers.",
+      "Deployed across AWS Lambda, EKS and CloudFront with autoscaling for 10x traffic spikes.",
+      "OpenAPI-first contract shared by every client, validated in CI on each pull request.",
+    ],
   },
   {
     title: "Vision QA pipeline",
     year: "2023",
+    role: "ML systems",
     body: "On-device inference plus an active-learning loop that cut manual labelling effort by two thirds.",
     tags: ["PyTorch", "ONNX", "MLOps"],
+    details: [
+      "ONNX-exported models running on-device with a quantised fallback path for low-end hardware.",
+      "Active-learning loop surfacing only uncertain samples, cutting labelling effort by ~66%.",
+      "Containerised training and evaluation jobs orchestrated through GitHub Actions and Kubernetes.",
+    ],
+  },
+];
+
+const skillGroups: { title: string; skills: string[]; key: string[] }[] = [
+  {
+    title: "Languages & runtimes",
+    key: ["TypeScript", "Python", "C# / .NET"],
+    skills: ["JavaScript", "ASP.NET Core", "Node.js", "Java"],
+  },
+  {
+    title: "Frontend",
+    key: ["React 18", "Next.js"],
+    skills: [
+      "Redux Toolkit",
+      "React Query / TanStack Query",
+      "Apollo Client",
+      "Angular",
+      "Material UI",
+      "HTML5",
+      "CSS3",
+    ],
+  },
+  {
+    title: "Backend & APIs",
+    key: ["NestJS", "GraphQL"],
+    skills: [
+      "Express.js",
+      "FastAPI",
+      "Spring Boot",
+      "REST",
+      "SOAP / WSDL",
+      "Microservices",
+      "API design",
+      "OpenAPI / Swagger",
+    ],
+  },
+  {
+    title: "AI & intelligent apps",
+    key: ["Azure OpenAI", "RAG"],
+    skills: [
+      "Azure AI Search",
+      "AI-assisted patient summarisation",
+      "Context-aware recommendations",
+    ],
+  },
+  {
+    title: "Data & messaging",
+    key: ["PostgreSQL", "Apache Kafka"],
+    skills: [
+      "MySQL",
+      "MongoDB",
+      "Redis",
+      "WebSockets",
+      "Data modeling",
+      "Caching",
+      "Query optimization",
+    ],
+  },
+  {
+    title: "Cloud & DevOps",
+    key: ["AWS", "Kubernetes"],
+    skills: [
+      "Lambda",
+      "EKS",
+      "S3",
+      "CloudFront",
+      "CloudWatch",
+      "API Gateway",
+      "Azure Container Apps",
+      "Docker",
+      "GitHub Actions",
+      "Jenkins",
+      "CI/CD",
+    ],
+  },
+  {
+    title: "Security",
+    key: ["OAuth 2.0", "Zero Trust"],
+    skills: ["OpenID Connect", "JWT", "Azure Entra ID", "RBAC"],
+  },
+  {
+    title: "Testing & observability",
+    key: ["Playwright", "OpenTelemetry"],
+    skills: [
+      "Jest",
+      "JUnit",
+      "React Testing Library",
+      "Cypress",
+      "Datadog",
+      "CloudWatch",
+      "Structured logging",
+      "Monitoring",
+      "Incident response",
+    ],
+  },
+  {
+    title: "System design",
+    key: ["Distributed systems", "Scalability"],
+    skills: [
+      "Data structures",
+      "Algorithms",
+      "Caching strategies",
+      "Performance optimization",
+      "Resource optimization",
+    ],
   },
 ];
 
 const navLinks = [
   { href: "#about", label: "About" },
+  { href: "#skills", label: "Skills" },
   { href: "#projects", label: "Projects" },
 ];
 
 function Index() {
   const [revealed, setRevealed] = useState(false);
+  const [active, setActive] = useState<Project | null>(null);
   const onRevealed = useCallback(() => setRevealed(true), []);
+  const closeModal = useCallback(() => setActive(null), []);
 
   return (
     <>
