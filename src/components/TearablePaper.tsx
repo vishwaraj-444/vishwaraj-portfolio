@@ -197,29 +197,31 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       brokenCount++;
     }
 
-    function tearNear(x0: number, y0: number, x1: number, y1: number) {
-      // small direct cut radius: most of the tear comes from strain
-      // propagating through the weave, not from the cursor slicing links
-      const radius = 13;
-      const dx = x1 - x0;
-      const dy = y1 - y0;
-      const l2 = dx * dx + dy * dy || 1;
-      for (let k = 0; k < linkCount; k++) {
-        if (!linkAlive[k]) continue;
-        const a = links[k * 2];
-        const b = links[k * 2 + 1];
-        const cx = (px[a] + px[b]) * 0.5;
-        const cy = (py[a] + py[b]) * 0.5;
-        let t = ((cx - x0) * dx + (cy - y0) * dy) / l2;
-        t = t < 0 ? 0 : t > 1 ? 1 : t;
-        const ddx = cx - (x0 + t * dx);
-        const ddy = cy - (y0 + t * dy);
-        const d = Math.hypot(ddx, ddy);
-        // multi-octave jitter -> ragged, fibre-following tear edge
-        const jitter =
-          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 5 +
-          Math.sin(cx * 0.61 + cy * 0.43) * 3;
-        if (d < radius + jitter) breakLink(k);
+    // pointer grab: gather a soft cluster of nodes around the press point.
+    // they are then pulled toward the cursor every sub-step, so the fabric
+    // follows the pointer with zero input lag while the weave behind it
+    // stretches, wrinkles and finally gives way purely from tension.
+    function grabAt(x: number, y: number) {
+      grabN = 0;
+      for (let i = 0; i < px.length; i++) {
+        if (pinned[i]) continue;
+        const d = Math.hypot(px[i] - x, py[i] - y);
+        if (d < GRAB_RADIUS) {
+          const f = 1 - d / GRAB_RADIUS;
+          grabIdx[grabN] = i;
+          grabW[grabN] = f * f * (3 - 2 * f);
+          grabN++;
+        }
+      }
+    }
+
+    function applyGrab() {
+      if (!dragging || grabN === 0) return;
+      for (let s = 0; s < grabN; s++) {
+        const i = grabIdx[s];
+        const wgt = grabW[s] * 0.42;
+        px[i] += (tx - px[i]) * wgt;
+        py[i] += (ty - py[i]) * wgt;
       }
     }
 
@@ -246,6 +248,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       }
       const iterations = released ? 2 : 5;
       for (let it = 0; it < iterations; it++) {
+        applyGrab();
         for (let k = 0; k < linkCount; k++) {
           if (!linkAlive[k]) continue;
           const a = links[k * 2];
