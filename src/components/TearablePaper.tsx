@@ -439,9 +439,16 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       if (!released && !tearStarted && brokenCount > 0) {
         tearStarted = true;
         setTearing(true);
+        // once the weave has opened, the lower edge lets go and the sheet's
+        // own weight hangs on what is left, so the rip keeps running
+        for (let c = 0; c < cols; c++) pinned[idx(c, rows - 1)] = 0;
+        for (let r = rows >> 1; r < rows; r++) {
+          pinned[idx(0, r)] = 0;
+          pinned[idx(cols - 1, r)] = 0;
+        }
       }
       // the sheet only gives way once a genuinely large rip has opened up
-      if (!released && brokenCount > linkCount * 0.055) {
+      if (!released && brokenCount > linkCount * 0.035) {
         released = true;
         setTorn(true);
         pinned.fill(0);
