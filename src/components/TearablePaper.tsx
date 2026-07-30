@@ -51,6 +51,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let degree = new Uint8Array(0); // remaining links per point -> curl detection
     let baseDegree = new Uint8Array(0);
     let fiber = new Float32Array(0); // per-cell fiber/grain value
+    // adjacency: up to 8 threads meet at a node (4 structural + 4 shear).
+    // used to weaken neighbouring threads when one snaps -> crack propagation
+    let ptLinks = new Int32Array(0);
+    let ptCount = new Uint8Array(0);
+    // pointer grab: a soft cluster of nodes springs toward the cursor
+    let grabIdx = new Int32Array(0);
+    let grabW = new Float32Array(0);
+    let grabN = 0;
 
     let linkCount = 0;
     let brokenCount = 0;
@@ -61,6 +69,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let my = 0;
     let pmx = 0;
     let pmy = 0;
+    let tx = 0; // smoothed pointer target the grabbed cluster chases
+    let ty = 0;
     let raf = 0;
     let last = performance.now();
     let acc = 0;
