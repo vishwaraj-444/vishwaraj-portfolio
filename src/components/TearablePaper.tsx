@@ -12,7 +12,7 @@ const FIXED_DT = 1 / 100;
 const SHADE_BUCKETS = 48;
 // how much neighbouring threads are weakened once a thread snaps: this is what
 // turns isolated breaks into a crack that runs through the weave
-const CRACK_WEAKEN = 0.9;
+const CRACK_WEAKEN = 0.85;
 const MIN_TEAR = 1.45; // threads never get weaker than this multiple of rest
 const GRAB_RADIUS = 86;
 
@@ -441,7 +441,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         setTearing(true);
       }
       // the sheet only gives way once a genuinely large rip has opened up
-      if (!released && brokenCount > linkCount * 0.11) {
+      if (!released && brokenCount > linkCount * 0.055) {
         released = true;
         setTorn(true);
         pinned.fill(0);
