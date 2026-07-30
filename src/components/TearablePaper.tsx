@@ -537,9 +537,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   return (
     <div className="fixed inset-0 z-50 select-none" style={{ touchAction: "none" }}>
       <canvas ref={canvasRef} className="block h-full w-full cursor-grab active:cursor-grabbing" />
-      <div className="paper-fibers pointer-events-none absolute inset-0" />
-      <div className="paper-grain pointer-events-none absolute inset-0" />
-      <div className="paper-light pointer-events-none absolute inset-0" />
+      <div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-700"
+        style={{ opacity: torn ? 0 : tearing ? 0.35 : 1 }}
+      >
+        <div className="paper-fibers absolute inset-0" />
+        <div className="paper-grain absolute inset-0" />
+        <div className="paper-light absolute inset-0" />
+      </div>
       <button
         type="button"
         onClick={() => {
