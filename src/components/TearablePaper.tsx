@@ -107,6 +107,11 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       degree = new Uint8Array(n);
       baseDegree = new Uint8Array(n);
       fiber = new Float32Array(n);
+      ptLinks = new Int32Array(n * 8).fill(-1);
+      ptCount = new Uint8Array(n);
+      grabIdx = new Int32Array(n);
+      grabW = new Float32Array(n);
+      grabN = 0;
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -151,6 +156,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         linkAlive[linkCount] = 1;
         degree[a]++;
         degree[b]++;
+        if (ptCount[a] < 8) ptLinks[a * 8 + ptCount[a]++] = linkCount;
+        if (ptCount[b] < 8) ptLinks[b * 8 + ptCount[b]++] = linkCount;
         linkCount++;
       };
 
@@ -173,8 +180,20 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
 
     function breakLink(k: number) {
       linkAlive[k] = 0;
-      degree[links[k * 2]]--;
-      degree[links[k * 2 + 1]]--;
+      const a = links[k * 2];
+      const b = links[k * 2 + 1];
+      degree[a]--;
+      degree[b]--;
+      // stress concentrates at the tip of the rip: the threads still holding
+      // at that node give way sooner, so the tear runs instead of pitting
+      for (let s = 0; s < ptCount[a]; s++) {
+        const j = ptLinks[a * 8 + s];
+        if (j >= 0 && linkAlive[j]) linkTear[j] *= CRACK_WEAKEN;
+      }
+      for (let s = 0; s < ptCount[b]; s++) {
+        const j = ptLinks[b * 8 + s];
+        if (j >= 0 && linkAlive[j]) linkTear[j] *= CRACK_WEAKEN;
+      }
       brokenCount++;
     }
 
