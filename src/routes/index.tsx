@@ -217,7 +217,7 @@ function Index() {
               href="#top"
               className="glass rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.25em]"
             >
-              AM
+              VS
             </a>
             <div className="glass flex items-center gap-1 rounded-full p-1">
               {navLinks.map((l) => (
@@ -230,7 +230,7 @@ function Index() {
                 </a>
               ))}
               <a
-                href="mailto:hello@aaravmehta.dev"
+                href="mailto:vishwarajsurthi@gmail.com"
                 className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground"
               >
                 Contact
@@ -251,7 +251,7 @@ function Index() {
           </span>
 
           <h1 className="mt-8 text-balance text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-            Aarav Mehta
+            Vishwaraj Surthi
           </h1>
           <p className="gradient-text mt-4 text-xl font-medium sm:text-2xl">
             Software Engineer / AI Engineer
@@ -273,7 +273,7 @@ function Index() {
               <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
             <a
-              href="mailto:hello@aaravmehta.dev"
+              href="mailto:vishwarajsurthi@gmail.com"
               className="btn-ghost group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
             >
               <Mail className="size-4" aria-hidden="true" />
