@@ -179,9 +179,8 @@ function Index() {
               </p>
               <p className="text-pretty">
                 Most of my time goes to systems that sit between models and users: retrieval,
-                orchestration, observability, and the interfaces that make all of it legible. I
-                care about craft in the details and about shipping things that survive real
-                traffic.
+                orchestration, observability, and the interfaces that make all of it legible. I care
+                about craft in the details and about shipping things that survive real traffic.
               </p>
             </div>
             <ul className="glass space-y-3 rounded-3xl p-6 text-sm">

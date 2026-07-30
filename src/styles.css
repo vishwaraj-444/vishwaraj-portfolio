@@ -153,8 +153,16 @@
 
 @utility aurora {
   background:
-    radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
-    radial-gradient(50rem 34rem at 90% 8%, color-mix(in oklab, var(--primary) 20%, transparent), transparent 72%);
+    radial-gradient(
+      60rem 40rem at 12% -10%,
+      color-mix(in oklab, var(--accent) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50rem 34rem at 90% 8%,
+      color-mix(in oklab, var(--primary) 20%, transparent),
+      transparent 72%
+    );
 }
 
 @utility noise {
@@ -169,7 +177,9 @@
   background-image:
     radial-gradient(oklch(0.45 0.02 80) 0.7px, transparent 0.7px),
     radial-gradient(oklch(0.6 0.02 80) 0.5px, transparent 0.5px);
-  background-size: 3px 3px, 7px 7px;
+  background-size:
+    3px 3px,
+    7px 7px;
 }
 
 @utility paper-fibers {
@@ -183,12 +193,7 @@
       transparent 3px,
       oklch(0.7 0.015 80 / 10%) 4px
     ),
-    repeating-linear-gradient(
-      4deg,
-      oklch(0.6 0.02 80 / 10%) 0px,
-      transparent 1px,
-      transparent 5px
-    );
+    repeating-linear-gradient(4deg, oklch(0.6 0.02 80 / 10%) 0px, transparent 1px, transparent 5px);
 }
 
 @utility paper-light {
@@ -210,7 +215,10 @@
   background-image: var(--gradient-accent);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-glow);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
   &:hover {
     transform: translateY(-2px);
     filter: brightness(1.06);
@@ -222,7 +230,10 @@
   border: 1px solid var(--glass-border);
   color: var(--foreground);
   backdrop-filter: blur(14px);
-  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
   &:hover {
     transform: translateY(-2px);
     border-color: color-mix(in oklab, var(--accent) 45%, transparent);
@@ -230,8 +241,14 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @utility animate-fade-in {
