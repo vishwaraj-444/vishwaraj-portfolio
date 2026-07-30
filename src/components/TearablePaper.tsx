@@ -2,14 +2,19 @@ import { useEffect, useRef, useState } from "react";
 
 // Mesh density adapts to viewport area so the cell count (and therefore the
 // solver cost) stays roughly constant across desktop and mobile.
-const TARGET_CELLS = 7600;
-const MIN_SPACING = 11;
-const TEAR_STRAIN = 2.35; // silk stretches a lot before the weave gives way
-const STIFFNESS = 0.58; // <1 = soft, elastic weave (never rubbery: strain-limited)
+const TARGET_CELLS = 8200;
+const MIN_SPACING = 10;
+const TEAR_STRAIN = 2.4; // silk stretches a lot before the weave gives way
+const STIFFNESS = 0.62; // <1 = soft, elastic weave (never rubbery: strain-limited)
 const GRAVITY = 470;
 const FRICTION = 0.991; // air drag on a light fabric
 const FIXED_DT = 1 / 100;
 const SHADE_BUCKETS = 48;
+// how much neighbouring threads are weakened once a thread snaps: this is what
+// turns isolated breaks into a crack that runs through the weave
+const CRACK_WEAKEN = 0.85;
+const MIN_TEAR = 1.45; // threads never get weaker than this multiple of rest
+const GRAB_RADIUS = 86;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -47,6 +52,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let degree = new Uint8Array(0); // remaining links per point -> curl detection
     let baseDegree = new Uint8Array(0);
     let fiber = new Float32Array(0); // per-cell fiber/grain value
+    // adjacency: up to 8 threads meet at a node (4 structural + 4 shear).
+    // used to weaken neighbouring threads when one snaps -> crack propagation
+    let ptLinks = new Int32Array(0);
+    let ptCount = new Uint8Array(0);
+    // pointer grab: a soft cluster of nodes springs toward the cursor
+    let grabIdx = new Int32Array(0);
+    let grabW = new Float32Array(0);
+    let grabN = 0;
 
     let linkCount = 0;
     let brokenCount = 0;
@@ -57,12 +70,19 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
     let my = 0;
     let pmx = 0;
     let pmy = 0;
+    let tx = 0; // smoothed pointer target the grabbed cluster chases
+    let ty = 0;
     let raf = 0;
     let last = performance.now();
     let acc = 0;
     let finished = false;
     let tearStarted = false;
     let time = 0;
+    // bounding box of the rip -> release once the slash runs across the sheet
+    let ripMinX = Infinity;
+    let ripMinY = Infinity;
+    let ripMaxX = -Infinity;
+    let ripMaxY = -Infinity;
 
     const buckets: Path2D[] = [];
 
@@ -93,6 +113,11 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       degree = new Uint8Array(n);
       baseDegree = new Uint8Array(n);
       fiber = new Float32Array(n);
+      ptLinks = new Int32Array(n * 8).fill(-1);
+      ptCount = new Uint8Array(n);
+      grabIdx = new Int32Array(n);
+      grabW = new Float32Array(n);
+      grabN = 0;
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -137,6 +162,8 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         linkAlive[linkCount] = 1;
         degree[a]++;
         degree[b]++;
+        if (ptCount[a] < 8) ptLinks[a * 8 + ptCount[a]++] = linkCount;
+        if (ptCount[b] < 8) ptLinks[b * 8 + ptCount[b]++] = linkCount;
         linkCount++;
       };
 
@@ -159,39 +186,63 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
 
     function breakLink(k: number) {
       linkAlive[k] = 0;
-      degree[links[k * 2]]--;
-      degree[links[k * 2 + 1]]--;
+      const a = links[k * 2];
+      const b = links[k * 2 + 1];
+      degree[a]--;
+      degree[b]--;
+      const mxp = (px[a] + px[b]) * 0.5;
+      const myp = (py[a] + py[b]) * 0.5;
+      if (mxp < ripMinX) ripMinX = mxp;
+      if (mxp > ripMaxX) ripMaxX = mxp;
+      if (myp < ripMinY) ripMinY = myp;
+      if (myp > ripMaxY) ripMaxY = myp;
+      // stress concentrates at the tip of the rip: the threads still holding
+      // at that node give way sooner, so the tear runs instead of pitting
+      for (let s = 0; s < ptCount[a]; s++) {
+        const j = ptLinks[a * 8 + s];
+        if (j >= 0 && linkAlive[j])
+          linkTear[j] = Math.max(linkLen[j] * MIN_TEAR, linkTear[j] * CRACK_WEAKEN);
+      }
+      for (let s = 0; s < ptCount[b]; s++) {
+        const j = ptLinks[b * 8 + s];
+        if (j >= 0 && linkAlive[j])
+          linkTear[j] = Math.max(linkLen[j] * MIN_TEAR, linkTear[j] * CRACK_WEAKEN);
+      }
       brokenCount++;
     }
 
-    function tearNear(x0: number, y0: number, x1: number, y1: number) {
-      // small direct cut radius: most of the tear comes from strain
-      // propagating through the weave, not from the cursor slicing links
-      const radius = 13;
-      const dx = x1 - x0;
-      const dy = y1 - y0;
-      const l2 = dx * dx + dy * dy || 1;
-      for (let k = 0; k < linkCount; k++) {
-        if (!linkAlive[k]) continue;
-        const a = links[k * 2];
-        const b = links[k * 2 + 1];
-        const cx = (px[a] + px[b]) * 0.5;
-        const cy = (py[a] + py[b]) * 0.5;
-        let t = ((cx - x0) * dx + (cy - y0) * dy) / l2;
-        t = t < 0 ? 0 : t > 1 ? 1 : t;
-        const ddx = cx - (x0 + t * dx);
-        const ddy = cy - (y0 + t * dy);
-        const d = Math.hypot(ddx, ddy);
-        // multi-octave jitter -> ragged, fibre-following tear edge
-        const jitter =
-          (Math.sin(cx * 0.13 + cy * 0.07) + Math.cos(cy * 0.19 - cx * 0.05)) * 5 +
-          Math.sin(cx * 0.61 + cy * 0.43) * 3;
-        if (d < radius + jitter) breakLink(k);
+    // pointer grab: gather a soft cluster of nodes around the press point.
+    // they are then pulled toward the cursor every sub-step, so the fabric
+    // follows the pointer with zero input lag while the weave behind it
+    // stretches, wrinkles and finally gives way purely from tension.
+    function grabAt(x: number, y: number) {
+      grabN = 0;
+      for (let i = 0; i < px.length; i++) {
+        // only fabric still attached to the weave can be pulled on; loose
+        // scraps are left to fall
+        if (pinned[i] || degree[i] === 0) continue;
+        const d = Math.hypot(px[i] - x, py[i] - y);
+        if (d < GRAB_RADIUS) {
+          const f = 1 - d / GRAB_RADIUS;
+          grabIdx[grabN] = i;
+          grabW[grabN] = f * f * (3 - 2 * f);
+          grabN++;
+        }
+      }
+    }
+
+    function applyGrab() {
+      if (!dragging || grabN === 0) return;
+      for (let s = 0; s < grabN; s++) {
+        const i = grabIdx[s];
+        const wgt = grabW[s] * 0.26;
+        px[i] += (tx - px[i]) * wgt;
+        py[i] += (ty - py[i]) * wgt;
       }
     }
 
     function step(dt: number) {
-      const g = released ? GRAVITY * 1.7 : GRAVITY;
+      const g = released ? GRAVITY * 1.7 : tearStarted ? GRAVITY * 1.35 : GRAVITY;
       const gdt = g * dt * dt;
       const n = px.length;
       // after release: per-piece flutter (air catching the fabric) so the
@@ -213,6 +264,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       }
       const iterations = released ? 2 : 5;
       for (let it = 0; it < iterations; it++) {
+        applyGrab();
         for (let k = 0; k < linkCount; k++) {
           if (!linkAlive[k]) continue;
           const a = links[k * 2];
@@ -311,9 +363,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
             light += 0.2 - compression * 0.22;
           }
 
-          light = light < 0.3 ? 0.3 : light > 1.18 ? 1.18 : light;
+          light = light < 0.3 ? 0.3 : light > 1.08 ? 1.08 : light;
 
-          let bucket = Math.round(((light - 0.3) / (1.18 - 0.3)) * (SHADE_BUCKETS - 1));
+          let bucket = Math.round(((light - 0.3) / (1.08 - 0.3)) * (SHADE_BUCKETS - 1));
           bucket = bucket < 0 ? 0 : bucket > SHADE_BUCKETS - 1 ? SHADE_BUCKETS - 1 : bucket;
 
           const p = buckets[bucket];
@@ -328,7 +380,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       ctx!.lineWidth = 1;
       ctx!.lineJoin = "round";
       for (let i = 0; i < SHADE_BUCKETS; i++) {
-        const t = 0.3 + (i / (SHADE_BUCKETS - 1)) * (1.18 - 0.3);
+        const t = 0.3 + (i / (SHADE_BUCKETS - 1)) * (1.08 - 0.3);
         // pearl silk: shadows go cool, highlights bloom warm-white
         const l = Math.min(253, 228 * t);
         const warm = Math.max(0, t - 0.95) * 40;
@@ -342,6 +394,42 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         ctx!.fill(buckets[i]);
         ctx!.stroke(buckets[i]);
       }
+
+      // frayed edge: loose threads hanging off every node where the weave has
+      // parted, so the rip reads as fibrous silk rather than a clipped polygon
+      if (brokenCount > 0) {
+        const fringe = new Path2D();
+        const len = Math.max(sx, sy) * 0.85;
+        for (let i = 0; i < px.length; i++) {
+          if (degree[i] >= baseDegree[i] || degree[i] === 0) continue;
+          let nx = 0;
+          let ny = 0;
+          let live = 0;
+          for (let s = 0; s < ptCount[i]; s++) {
+            const k = ptLinks[i * 8 + s];
+            if (k < 0 || !linkAlive[k]) continue;
+            const o = links[k * 2] === i ? links[k * 2 + 1] : links[k * 2];
+            nx += px[o] - px[i];
+            ny += py[o] - py[i];
+            live++;
+          }
+          if (!live) continue;
+          const m = Math.hypot(nx, ny) || 1;
+          // point the thread away from the surviving weave, with a per-node
+          // wobble so no two fibres lie parallel
+          const wob = Math.sin(px[i] * 0.4 + py[i] * 0.27) * 0.5;
+          const ang = Math.atan2(-ny / m, -nx / m) + wob;
+          const l = len * (0.45 + ((i * 2654435761) % 1000) / 1000);
+          fringe.moveTo(px[i], py[i]);
+          fringe.lineTo(px[i] + Math.cos(ang) * l, py[i] + Math.sin(ang) * l);
+        }
+        ctx!.globalAlpha = fade * 0.5;
+        ctx!.lineWidth = 0.9;
+        ctx!.lineCap = "round";
+        ctx!.strokeStyle = "rgb(238, 236, 231)";
+        ctx!.stroke(fringe);
+      }
+
       ctx!.globalAlpha = 1;
     }
 
@@ -362,14 +450,24 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       if (!released && !tearStarted && brokenCount > 0) {
         tearStarted = true;
         setTearing(true);
+        // once the weave has opened, the lower edge lets go and the sheet's
+        // own weight hangs on what is left, so the rip keeps running
+        for (let c = 0; c < cols; c++) pinned[idx(c, rows - 1)] = 0;
+        for (let r = rows >> 1; r < rows; r++) {
+          pinned[idx(0, r)] = 0;
+          pinned[idx(cols - 1, r)] = 0;
+        }
       }
-      if (!released && brokenCount > (cols + rows) * 4.5) {
+      // the sheet only gives way once a genuinely large rip has opened up
+      const ripSpan =
+        brokenCount > 0 ? Math.hypot(ripMaxX - ripMinX, ripMaxY - ripMinY) : 0;
+      if (!released && (brokenCount > linkCount * 0.035 || ripSpan > Math.hypot(w, h) * 0.3)) {
         released = true;
         setTorn(true);
         pinned.fill(0);
       }
       if (released) {
-        fade -= frame * 0.62;
+        fade -= frame * 0.42;
         let offscreen = true;
         for (let i = 0; i < py.length; i++) {
           if (py[i] < h + 80) {
@@ -393,6 +491,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       dragging = true;
       mx = pmx = e.clientX;
       my = pmy = e.clientY;
+      tx = mx;
+      ty = my;
+      grabAt(mx, my);
       canvas!.setPointerCapture(e.pointerId);
     };
     const onMove = (e: PointerEvent) => {
@@ -401,25 +502,15 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       pmy = my;
       mx = e.clientX;
       my = e.clientY;
-      const dx = mx - pmx;
-      const dy = my - pmy;
-        const grab = 78;
-        for (let i = 0; i < px.length; i++) {
-          if (pinned[i]) continue;
-          const d = Math.hypot(px[i] - mx, py[i] - my);
-          if (d < grab) {
-            const f = 1 - d / grab;
-            const falloff = f * f * (3 - 2 * f); // smooth grab -> no rubbery snap
-            ox[i] = px[i] - dx * 0.95 * falloff;
-            oy[i] = py[i] - dy * 0.95 * falloff;
-            px[i] += dx * 0.8 * falloff;
-            py[i] += dy * 0.8 * falloff;
-          }
-        }
-      tearNear(pmx, pmy, mx, my);
+      tx = mx;
+      ty = my;
+      // keep picking up whatever fabric is under the cursor so a sweeping
+      // drag keeps driving the rip forward instead of dying with the scrap
+      grabAt(mx, my);
     };
     const onUp = () => {
       dragging = false;
+      grabN = 0;
     };
 
     const onResize = () => {
@@ -466,9 +557,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   return (
     <div className="fixed inset-0 z-50 select-none" style={{ touchAction: "none" }}>
       <canvas ref={canvasRef} className="block h-full w-full cursor-grab active:cursor-grabbing" />
-      <div className="paper-fibers pointer-events-none absolute inset-0" />
-      <div className="paper-grain pointer-events-none absolute inset-0" />
-      <div className="paper-light pointer-events-none absolute inset-0" />
+      <div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-700"
+        style={{ opacity: torn ? 0 : tearing ? 0.35 : 1 }}
+      >
+        <div className="paper-fibers absolute inset-0" />
+        <div className="paper-grain absolute inset-0" />
+        <div className="paper-light absolute inset-0" />
+      </div>
       <button
         type="button"
         onClick={() => {
