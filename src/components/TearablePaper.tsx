@@ -378,6 +378,42 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         ctx!.fill(buckets[i]);
         ctx!.stroke(buckets[i]);
       }
+
+      // frayed edge: loose threads hanging off every node where the weave has
+      // parted, so the rip reads as fibrous silk rather than a clipped polygon
+      if (brokenCount > 0) {
+        const fringe = new Path2D();
+        const len = Math.max(sx, sy) * 0.85;
+        for (let i = 0; i < px.length; i++) {
+          if (degree[i] >= baseDegree[i] || degree[i] === 0) continue;
+          let nx = 0;
+          let ny = 0;
+          let live = 0;
+          for (let s = 0; s < ptCount[i]; s++) {
+            const k = ptLinks[i * 8 + s];
+            if (k < 0 || !linkAlive[k]) continue;
+            const o = links[k * 2] === i ? links[k * 2 + 1] : links[k * 2];
+            nx += px[o] - px[i];
+            ny += py[o] - py[i];
+            live++;
+          }
+          if (!live) continue;
+          const m = Math.hypot(nx, ny) || 1;
+          // point the thread away from the surviving weave, with a per-node
+          // wobble so no two fibres lie parallel
+          const wob = Math.sin(px[i] * 0.4 + py[i] * 0.27) * 0.5;
+          const ang = Math.atan2(-ny / m, -nx / m) + wob;
+          const l = len * (0.45 + ((i * 2654435761) % 1000) / 1000);
+          fringe.moveTo(px[i], py[i]);
+          fringe.lineTo(px[i] + Math.cos(ang) * l, py[i] + Math.sin(ang) * l);
+        }
+        ctx!.globalAlpha = fade * 0.5;
+        ctx!.lineWidth = 0.9;
+        ctx!.lineCap = "round";
+        ctx!.strokeStyle = "rgb(238, 236, 231)";
+        ctx!.stroke(fringe);
+      }
+
       ctx!.globalAlpha = 1;
     }
 
