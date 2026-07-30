@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from "react";
 
 // Mesh density adapts to viewport area so the cell count (and therefore the
 // solver cost) stays roughly constant across desktop and mobile.
-const TARGET_CELLS = 7600;
-const MIN_SPACING = 11;
-const TEAR_STRAIN = 2.35; // silk stretches a lot before the weave gives way
-const STIFFNESS = 0.58; // <1 = soft, elastic weave (never rubbery: strain-limited)
+const TARGET_CELLS = 8200;
+const MIN_SPACING = 10;
+const TEAR_STRAIN = 2.15; // silk stretches a lot before the weave gives way
+const STIFFNESS = 0.62; // <1 = soft, elastic weave (never rubbery: strain-limited)
 const GRAVITY = 470;
 const FRICTION = 0.991; // air drag on a light fabric
 const FIXED_DT = 1 / 100;
 const SHADE_BUCKETS = 48;
+// how much neighbouring threads are weakened once a thread snaps: this is what
+// turns isolated breaks into a crack that runs through the weave
+const CRACK_WEAKEN = 0.74;
+const GRAB_RADIUS = 86;
 
 export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
