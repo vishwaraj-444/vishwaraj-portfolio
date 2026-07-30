@@ -429,6 +429,9 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       dragging = true;
       mx = pmx = e.clientX;
       my = pmy = e.clientY;
+      tx = mx;
+      ty = my;
+      grabAt(mx, my);
       canvas!.setPointerCapture(e.pointerId);
     };
     const onMove = (e: PointerEvent) => {
@@ -437,25 +440,12 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
       pmy = my;
       mx = e.clientX;
       my = e.clientY;
-      const dx = mx - pmx;
-      const dy = my - pmy;
-        const grab = 78;
-        for (let i = 0; i < px.length; i++) {
-          if (pinned[i]) continue;
-          const d = Math.hypot(px[i] - mx, py[i] - my);
-          if (d < grab) {
-            const f = 1 - d / grab;
-            const falloff = f * f * (3 - 2 * f); // smooth grab -> no rubbery snap
-            ox[i] = px[i] - dx * 0.95 * falloff;
-            oy[i] = py[i] - dy * 0.95 * falloff;
-            px[i] += dx * 0.8 * falloff;
-            py[i] += dy * 0.8 * falloff;
-          }
-        }
-      tearNear(pmx, pmy, mx, my);
+      tx = mx;
+      ty = my;
     };
     const onUp = () => {
       dragging = false;
+      grabN = 0;
     };
 
     const onResize = () => {
