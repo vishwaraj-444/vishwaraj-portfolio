@@ -438,13 +438,14 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         tearStarted = true;
         setTearing(true);
       }
-      if (!released && brokenCount > (cols + rows) * 4.5) {
+      // the sheet only gives way once a genuinely large rip has opened up
+      if (!released && brokenCount > linkCount * 0.11) {
         released = true;
         setTorn(true);
         pinned.fill(0);
       }
       if (released) {
-        fade -= frame * 0.62;
+        fade -= frame * 0.42;
         let offscreen = true;
         for (let i = 0; i < py.length; i++) {
           if (py[i] < h + 80) {
