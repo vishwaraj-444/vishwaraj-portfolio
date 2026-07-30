@@ -172,6 +172,32 @@
   background-size: 3px 3px, 7px 7px;
 }
 
+@utility paper-fibers {
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image:
+    repeating-linear-gradient(
+      92deg,
+      oklch(0.55 0.02 80 / 18%) 0px,
+      transparent 1px,
+      transparent 3px,
+      oklch(0.7 0.015 80 / 10%) 4px
+    ),
+    repeating-linear-gradient(
+      4deg,
+      oklch(0.6 0.02 80 / 10%) 0px,
+      transparent 1px,
+      transparent 5px
+    );
+}
+
+@utility paper-light {
+  background:
+    radial-gradient(80rem 60rem at 18% -12%, oklch(1 0 0 / 45%), transparent 62%),
+    radial-gradient(60rem 50rem at 92% 108%, oklch(0.35 0.02 80 / 22%), transparent 60%);
+  mix-blend-mode: soft-light;
+}
+
 @utility paper-ink {
   color: oklch(0.42 0.02 80);
 }
