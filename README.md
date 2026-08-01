@@ -9,7 +9,7 @@ Use Next.js 15, React 19, TypeScript, Tailwind CSS, and a custom physics impleme
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-git clone <this-repository-url>
+git clone https://github.com/vishwaraj-444/tearable-reveal.git
 cd <repository-name>
 npm i
 npm run dev
