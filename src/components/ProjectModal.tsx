@@ -10,7 +10,13 @@ export type Project = {
   details?: string[];
 };
 
-export function ProjectModal({ project, onClose }: { project: Project | null; onClose: () => void }) {
+export function ProjectModal({
+  project,
+  onClose,
+}: {
+  project: Project | null;
+  onClose: () => void;
+}) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -71,7 +77,10 @@ export function ProjectModal({ project, onClose }: { project: Project | null; on
           <ul className="mt-5 space-y-2.5">
             {project.details.map((d) => (
               <li key={d} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                <span
+                  className="mt-2 size-1.5 shrink-0 rounded-full bg-accent"
+                  aria-hidden="true"
+                />
                 {d}
               </li>
             ))}

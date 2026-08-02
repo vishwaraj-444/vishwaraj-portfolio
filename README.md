@@ -1,6 +1,4 @@
-
 The experience should begin with a single full-screen paper sheet covering the entire viewport. The paper should have a realistic texture, subtle shadows, slightly curled edges while dragging, and feel like thick premium cardstock.
-
 
 Use Next.js 15, React 19, TypeScript, Tailwind CSS, and a custom physics implementation. Avoid Three.js, Babylon.js, or heavy 3D libraries. Prioritize performance, responsiveness, accessibility, and clean component architecture.
 

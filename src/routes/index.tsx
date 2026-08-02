@@ -7,7 +7,7 @@ import { ProjectModal, type Project } from "@/components/ProjectModal";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vishwaraj Surthi — Software & AI Engineer Portfolio" },
+      { title: "Vishwaraj Surthi" },
       {
         name: "description",
         content:
@@ -195,14 +195,24 @@ const navLinks = [
 ];
 
 function Index() {
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    const introShown = sessionStorage.getItem("introShown");
+    return introShown === "true";
+  });
   const [active, setActive] = useState<Project | null>(null);
-  const onRevealed = useCallback(() => setRevealed(true), []);
+  const onRevealed = useCallback(() => {
+    sessionStorage.setItem("introShown", "true");
+    setRevealed(true);
+  }, []);
   const closeModal = useCallback(() => setActive(null), []);
 
   return (
     <>
-      <TearablePaper onRevealed={onRevealed} />
+      {!revealed && <TearablePaper onRevealed={onRevealed} />}
 
       <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
         <div className="aurora pointer-events-none absolute inset-0" aria-hidden="true" />
@@ -241,9 +251,8 @@ function Index() {
 
         <section
           id="top"
-          className={`relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-24 ${
-            revealed ? "animate-fade-in" : ""
-          }`}
+          className={`relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-24 ${revealed ? "animate-fade-in" : ""
+            }`}
         >
           <span className="glass inline-flex w-fit items-center gap-2 rounded-full px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground">
             <span className="size-1.5 rounded-full bg-accent" />

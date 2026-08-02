@@ -459,8 +459,7 @@ export function TearablePaper({ onRevealed }: { onRevealed?: () => void }) {
         }
       }
       // the sheet only gives way once a genuinely large rip has opened up
-      const ripSpan =
-        brokenCount > 0 ? Math.hypot(ripMaxX - ripMinX, ripMaxY - ripMinY) : 0;
+      const ripSpan = brokenCount > 0 ? Math.hypot(ripMaxX - ripMinX, ripMaxY - ripMinY) : 0;
       if (!released && (brokenCount > linkCount * 0.035 || ripSpan > Math.hypot(w, h) * 0.3)) {
         released = true;
         setTorn(true);
