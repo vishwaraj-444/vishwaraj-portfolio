@@ -1,6 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { ArrowDown, ArrowUpRight, FileText, Mail } from "lucide-react";
+import {
+  SiDocker,
+  SiFastapi,
+  SiJavascript,
+  SiKubernetes,
+  SiMongodb,
+  SiNextdotjs,
+  SiNodedotjs,
+  SiPostgresql,
+  SiPython,
+  SiReact,
+  SiTailwindcss,
+  SiTypescript,
+  SiDotnet,
+} from "react-icons/si";
+import { GrOracle } from "react-icons/gr";
+import { TbBrandAws, TbBrandCSharp } from "react-icons/tb";
+import LogoLoop from "@/components/LogoLoop";
+import ShinyText from "@/components/ShinyText";
 import { TearablePaper } from "@/components/TearablePaper";
 import { ProjectModal, type Project } from "@/components/ProjectModal";
 
@@ -30,6 +49,33 @@ const stats = [
   { value: "6+", label: "Years shipping software" },
   { value: "20+", label: "Products & ML systems" },
   { value: "3", label: "Patents & papers" },
+];
+
+const techLogos = [
+  { node: <SiReact />, title: "React", href: "https://react.dev" },
+  { node: <SiNextdotjs />, title: "Next.js", href: "https://nextjs.org" },
+  { node: <SiTypescript />, title: "TypeScript", href: "https://www.typescriptlang.org" },
+  {
+    node: <SiJavascript />,
+    title: "JavaScript",
+    href: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+  },
+  { node: <SiNodedotjs />, title: "Node.js", href: "https://nodejs.org" },
+  { node: <SiPython />, title: "Python", href: "https://www.python.org" },
+  { node: <SiFastapi />, title: "FastAPI", href: "https://fastapi.tiangolo.com" },
+  { node: <SiDotnet />, title: ".NET", href: "https://dotnet.microsoft.com" },
+  {
+    node: <TbBrandCSharp />,
+    title: "C#",
+    href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
+  },
+  { node: <SiPostgresql />, title: "PostgreSQL", href: "https://www.postgresql.org" },
+  { node: <GrOracle />, title: "Oracle DB", href: "https://www.oracle.com/database/" },
+  { node: <SiMongodb />, title: "MongoDB", href: "https://www.mongodb.com" },
+  { node: <SiTailwindcss />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
+  { node: <SiDocker />, title: "Docker", href: "https://www.docker.com" },
+  { node: <SiKubernetes />, title: "Kubernetes", href: "https://kubernetes.io" },
+  { node: <TbBrandAws />, title: "AWS S3", href: "https://aws.amazon.com/s3/" },
 ];
 
 const projects: Project[] = [
@@ -218,30 +264,30 @@ function Index() {
         <div className="aurora pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="noise pointer-events-none absolute inset-0" aria-hidden="true" />
 
-        <header className="sticky top-0 z-30 w-full">
+        <header className="sticky top-0 z-30 w-full px-3 pt-3 sm:px-6">
           <nav
             aria-label="Primary"
-            className="mx-auto mt-4 flex max-w-5xl items-center justify-between gap-4 px-6"
+            className="mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-full border border-white/10 bg-background/60 px-2 py-2 backdrop-blur-xl sm:px-3"
           >
             <a
               href="#top"
-              className="glass rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.25em]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.02] text-[10px] font-medium uppercase tracking-[0.25em] text-foreground"
             >
               VS
             </a>
-            <div className="glass flex items-center gap-1 rounded-full p-1">
+            <div className="flex flex-wrap items-center justify-center gap-1">
               {navLinks.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
-                  className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground"
+                  className="rounded-full px-2.5 py-1.5 text-[10px] text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground sm:px-3 sm:text-xs"
                 >
                   {l.label}
                 </a>
               ))}
               <a
                 href="mailto:vishwarajsurthi@gmail.com"
-                className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground"
+                className="rounded-full px-2.5 py-1.5 text-[10px] text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground sm:px-3 sm:text-xs"
               >
                 Contact
               </a>
@@ -251,31 +297,55 @@ function Index() {
 
         <section
           id="top"
-          className={`relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-24 ${revealed ? "animate-fade-in" : ""
+          className={`relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-24 ${revealed ? "animate-fade-in" : ""
             }`}
         >
-          <span className="glass inline-flex w-fit items-center gap-2 rounded-full px-4 py-1.5 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <span className="glass inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:px-4 sm:text-xs">
             <span className="size-1.5 rounded-full bg-accent" />
             Available for select work
           </span>
 
-          <h1 className="mt-8 text-balance text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-            Vishwaraj Surthi
-          </h1>
-          <p className="gradient-text mt-4 text-xl font-medium sm:text-2xl">
-            Software Engineer / AI Engineer
-          </p>
+          <div className="mt-6 sm:mt-8">
+            <div className="overflow-hidden bg-transparent">
+              <ShinyText
+                text="Vishwaraj Surthi"
+                speed={2.4}
+                color="#edf3fb"
+                shineColor="rgba(255,255,255,0.85)"
+                spread={82}
+                direction="left"
+                yoyo={false}
+                pauseOnHover={false}
+                disabled={false}
+                className="block text-[clamp(2.6rem,7vw,7.2rem)] font-[300] leading-[0.82] tracking-[-0.08em] text-white/95"
+              />
+            </div>
 
-          <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            I design and build production systems where solid engineering meets applied AI — from
-            low-latency backends and retrieval pipelines to interfaces that feel physical, quick and
-            considered.
-          </p>
+            <div className="mt-4 max-w-3xl space-y-3 sm:mt-5 sm:space-y-4">
+              <ShinyText
+                text="Software Engineer / AI Engineer"
+                speed={3}
+                color="#dfe7f2"
+                shineColor="rgba(255,255,255,0.82)"
+                spread={90}
+                className="text-sm font-light tracking-[0.14em] uppercase text-white/80 sm:text-xl"
+                pauseOnHover
+              />
+
+              <p className="text-pretty text-sm leading-relaxed text-muted-foreground sm:text-lg">
+                I design and build production systems where solid engineering meets applied AI —
+                from low-latency backends and retrieval pipelines to interfaces that feel physical,
+                quick and considered.
+              </p>
+            </div>
+          </div>
 
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <a
               href="/resume.pdf"
-              className="btn-primary group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary group inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium sm:w-auto"
             >
               <FileText className="size-4" aria-hidden="true" />
               Resume
@@ -283,14 +353,35 @@ function Index() {
             </a>
             <a
               href="mailto:vishwarajsurthi@gmail.com"
-              className="btn-ghost group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost group inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium sm:w-auto"
             >
               <Mail className="size-4" aria-hidden="true" />
               Contact
             </a>
           </div>
 
-          <dl className="mt-16 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-12 w-full max-w-3xl">
+            <div className="mb-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground/80">
+              Built with
+            </div>
+            <LogoLoop
+              logos={techLogos}
+              speed={100}
+              direction="left"
+              logoHeight={52}
+              gap={36}
+              hoverSpeed={0}
+              scaleOnHover
+              fadeOut
+              fadeOutColor="rgba(10, 10, 15, 0.96)"
+              ariaLabel="Technology partners"
+              style={{ height: 72, width: "100%" }}
+            />
+          </div>
+
+          <dl className="mt-16 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
             {stats.map((s) => (
               <div
                 key={s.label}
@@ -310,9 +401,9 @@ function Index() {
           </div>
         </section>
 
-        <section id="about" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+        <section id="about" className="relative mx-auto max-w-5xl scroll-mt-24 px-4 pb-24 sm:px-6">
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">About</h2>
-          <div className="mt-8 grid gap-10 sm:grid-cols-[1.4fr_1fr]">
+          <div className="mt-8 grid gap-10 md:grid-cols-[1.4fr_1fr]">
             <div className="space-y-4 text-base leading-relaxed text-muted-foreground">
               <p className="text-pretty">
                 I'm a software and AI engineer who likes the unglamorous parts: latency budgets,
@@ -328,8 +419,6 @@ function Index() {
             <ul className="glass space-y-3 rounded-3xl p-6 text-sm">
               {[
                 ["Currently", "Building applied AI systems"],
-                ["Email", "vishwarajsurthi@gmail.com"],
-                ["Toolkit", "TypeScript, Python, C#/.NET, Postgres"],
                 ["Interests", "Retrieval, evals, interface craft"],
               ].map(([k, v]) => (
                 <li key={k} className="flex flex-col gap-0.5">
@@ -343,7 +432,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="skills" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+        <section id="skills" className="relative mx-auto max-w-5xl scroll-mt-24 px-4 pb-24 sm:px-6">
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Skills</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {skillGroups.map((g) => (
@@ -369,7 +458,10 @@ function Index() {
           </div>
         </section>
 
-        <section id="projects" className="relative mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+        <section
+          id="projects"
+          className="relative mx-auto max-w-5xl scroll-mt-24 px-4 pb-24 sm:px-6"
+        >
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Projects</h2>
           <p className="mt-3 text-sm text-muted-foreground">Select a project for the details.</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -403,7 +495,7 @@ function Index() {
           </div>
         </section>
 
-        <section className="relative mx-auto max-w-5xl px-6 pb-32">
+        <section className="relative mx-auto max-w-5xl px-4 pb-32 sm:px-6">
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
             Selected focus
           </h2>

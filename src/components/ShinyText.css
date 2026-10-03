@@ -1,0 +1,25 @@
+.shiny-text {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.7);
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: inherit;
+  animation: shine 7s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 140% center;
+  }
+  50% {
+    background-position: 50% center;
+  }
+  100% {
+    background-position: -40% center;
+  }
+}
+
+.shiny-text.disabled {
+  animation: none;
+}
