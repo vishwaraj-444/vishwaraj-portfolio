@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
-import { ArrowDown, ArrowUpRight, FileText, Mail } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowDown, ArrowUpRight, FileText, Mail, Moon, SunMedium } from "lucide-react";
 import {
   SiDocker,
   SiFastapi,
@@ -18,6 +18,7 @@ import {
 } from "react-icons/si";
 import { GrOracle } from "react-icons/gr";
 import { TbBrandAws, TbBrandCSharp } from "react-icons/tb";
+import DodgeField from "@/components/DodgeField";
 import LogoLoop from "@/components/LogoLoop";
 import ShinyText from "@/components/ShinyText";
 import { TearablePaper } from "@/components/TearablePaper";
@@ -249,7 +250,28 @@ function Index() {
     const introShown = sessionStorage.getItem("introShown");
     return introShown === "true";
   });
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") {
+      return "dark";
+    }
+
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme === "dark" || storedTheme === "light") {
+      return storedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [active, setActive] = useState<Project | null>(null);
+  const [catchOpen, setCatchOpen] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
   const onRevealed = useCallback(() => {
     sessionStorage.setItem("introShown", "true");
     setRevealed(true);
@@ -260,7 +282,49 @@ function Index() {
     <>
       {!revealed && <TearablePaper onRevealed={onRevealed} />}
 
-      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {catchOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-xl rounded-[32px] border border-white/10 bg-background/90 p-4 shadow-2xl">
+            <button
+              type="button"
+              aria-label="Close Catch me game"
+              onClick={() => setCatchOpen(false)}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-lg text-foreground"
+            >
+              ×
+            </button>
+            <div className="pt-8">
+              <DodgeField
+                inkColor={theme === "dark" ? "#f5f5f5" : "#111827"}
+                contrastColor={theme === "dark" ? "#18181b" : "#ffffff"}
+                fieldHeight={240}
+                reach={72}
+                radius={120}
+                falloff={2}
+                fleeDuration={130}
+                returnDuration={620}
+                returnBounce={0.1}
+                axis="both"
+                wall="clamp"
+                patience={4}
+                onCatch={() => console.log("caught")}
+              >
+                {({ dodges, gave }) => (
+                  <button
+                    type="button"
+                    className="dodge-field__pill"
+                    aria-label={gave ? "Okay, okay" : dodges ? `Nope x${dodges}` : "Catch me"}
+                  >
+                    {gave ? "Okay, okay" : dodges ? `Nope x${dodges}` : "Catch me"}
+                  </button>
+                )}
+              </DodgeField>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
         <div className="aurora pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="noise pointer-events-none absolute inset-0" aria-hidden="true" />
 
@@ -276,6 +340,13 @@ function Index() {
               VS
             </a>
             <div className="flex flex-wrap items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCatchOpen(true)}
+                className="rounded-full border border-blue-400/40 bg-blue-500/10 px-3 py-1.5 text-[10px] font-medium text-blue-700 transition-colors duration-200 hover:bg-blue-500/15 hover:text-blue-600 dark:text-blue-200 dark:hover:text-blue-100 sm:px-3 sm:text-xs"
+              >
+                Catch me
+              </button>
               {navLinks.map((l) => (
                 <a
                   key={l.href}
@@ -285,20 +356,42 @@ function Index() {
                   {l.label}
                 </a>
               ))}
-              <a
-                href="mailto:vishwarajsurthi@gmail.com"
-                className="rounded-full px-2.5 py-1.5 text-[10px] text-muted-foreground transition-colors duration-200 hover:bg-white/5 hover:text-foreground sm:px-3 sm:text-xs"
+              <button
+                type="button"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                aria-pressed={theme === "dark"}
+                onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+                className="relative inline-flex h-8 w-14 items-center rounded-full border border-border bg-secondary p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Contact
-              </a>
+                <span
+                  className={
+                    theme === "dark"
+                      ? "absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-background text-foreground shadow-sm transition-transform duration-200 translate-x-6"
+                      : "absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-background text-foreground shadow-sm transition-transform duration-200 translate-x-0"
+                  }
+                >
+                  {theme === "dark" ? (
+                    <SunMedium className="size-3.5" aria-hidden="true" />
+                  ) : (
+                    <Moon className="size-3.5" aria-hidden="true" />
+                  )}
+                </span>
+                <span className="relative flex w-full items-center justify-between px-1.5 text-[10px] text-muted-foreground">
+                  <SunMedium className="size-3 opacity-70" aria-hidden="true" />
+                  <Moon className="size-3 opacity-70" aria-hidden="true" />
+                </span>
+              </button>
             </div>
           </nav>
         </header>
 
         <section
           id="top"
-          className={`relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-24 ${revealed ? "animate-fade-in" : ""
-            }`}
+          className={
+            revealed
+              ? "relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-24 animate-fade-in"
+              : "relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-4 py-20 sm:px-6 sm:py-24"
+          }
         >
           <span className="glass inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:px-4 sm:text-xs">
             <span className="size-1.5 rounded-full bg-accent" />
@@ -310,14 +403,14 @@ function Index() {
               <ShinyText
                 text="Vishwaraj Surthi"
                 speed={2.4}
-                color="#edf3fb"
-                shineColor="rgba(255,255,255,0.85)"
+                color={theme === "dark" ? "#edf3fb" : "#111827"}
+                shineColor={theme === "dark" ? "rgba(255,255,255,0.85)" : "rgba(17,24,39,0.5)"}
                 spread={82}
                 direction="left"
                 yoyo={false}
                 pauseOnHover={false}
                 disabled={false}
-                className="block text-[clamp(2.6rem,7vw,7.2rem)] font-[300] leading-[0.82] tracking-[-0.08em] text-white/95"
+                className="block text-[clamp(2.6rem,7vw,7.2rem)] font-[300] leading-[0.82] tracking-[-0.08em]"
               />
             </div>
 
@@ -325,10 +418,10 @@ function Index() {
               <ShinyText
                 text="Software Engineer / AI Engineer"
                 speed={3}
-                color="#dfe7f2"
-                shineColor="rgba(255,255,255,0.82)"
+                color={theme === "dark" ? "#dfe7f2" : "#1f2937"}
+                shineColor={theme === "dark" ? "rgba(255,255,255,0.82)" : "rgba(31,41,55,0.48)"}
                 spread={90}
-                className="text-sm font-light tracking-[0.14em] uppercase text-white/80 sm:text-xl"
+                className="text-sm font-light tracking-[0.14em] uppercase sm:text-xl"
                 pauseOnHover
               />
 
@@ -416,7 +509,7 @@ function Index() {
                 about craft in the details and about shipping things that survive real traffic.
               </p>
             </div>
-            <ul className="glass space-y-3 rounded-3xl p-6 text-sm">
+            <ul className="space-y-3 rounded-3xl border border-black/10 bg-transparent p-6 text-sm transition-colors duration-200 dark:border-white/10">
               {[
                 ["Currently", "Building applied AI systems"],
                 ["Interests", "Retrieval, evals, interface craft"],
@@ -436,7 +529,10 @@ function Index() {
           <h2 className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Skills</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {skillGroups.map((g) => (
-              <article key={g.title} className="glass rounded-3xl p-6">
+              <article
+                key={g.title}
+                className="rounded-3xl border border-black/10 bg-transparent p-6 transition-all duration-200 hover:-translate-y-1 hover:border-blue-400/60 hover:bg-white/[0.02] hover:shadow-[0_0_0_1px_rgba(96,165,250,0.2)] dark:border-white/10 dark:hover:border-blue-300/60 dark:hover:bg-white/[0.02]"
+              >
                 <h3 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   {g.title}
                 </h3>
@@ -444,7 +540,7 @@ function Index() {
                   {g.key.map((s) => (
                     <li
                       key={s}
-                      className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium text-foreground"
+                      className="rounded-full border border-black/10 bg-background/40 px-3 py-1 text-xs font-medium text-foreground transition-colors duration-200 hover:border-blue-400/70 hover:text-blue-600 dark:border-white/10 dark:hover:border-blue-300/60 dark:hover:text-blue-200"
                     >
                       {s}
                     </li>
@@ -471,10 +567,12 @@ function Index() {
                 type="button"
                 onClick={() => setActive(p)}
                 aria-haspopup="dialog"
-                className="glass group rounded-3xl p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group rounded-3xl border border-black/10 bg-transparent p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/60 hover:bg-white/[0.02] hover:shadow-[0_0_0_1px_rgba(96,165,250,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/10 dark:hover:border-blue-300/60 dark:hover:bg-white/[0.02]"
               >
                 <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="text-lg font-medium">{p.title}</h3>
+                  <h3 className="text-lg font-medium transition-colors duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-200">
+                    {p.title}
+                  </h3>
                   <span className="text-xs uppercase tracking-widest text-muted-foreground">
                     {p.year}
                   </span>
@@ -484,7 +582,7 @@ function Index() {
                   {p.tags.map((t) => (
                     <li
                       key={t}
-                      className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+                      className="rounded-full border border-black/10 bg-background/40 px-3 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:border-blue-400/70 hover:text-blue-600 dark:border-white/10 dark:hover:border-blue-300/60 dark:hover:text-blue-200"
                     >
                       {t}
                     </li>
@@ -512,9 +610,11 @@ function Index() {
             ].map((c) => (
               <article
                 key={c.title}
-                className="glass rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40"
+                className="rounded-3xl border border-black/10 bg-transparent p-7 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/60 hover:bg-white/[0.02] hover:shadow-[0_0_0_1px_rgba(96,165,250,0.18)] dark:border-white/10 dark:hover:border-blue-300/60 dark:hover:bg-white/[0.02]"
               >
-                <h3 className="text-lg font-medium">{c.title}</h3>
+                <h3 className="text-lg font-medium transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-200">
+                  {c.title}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
               </article>
             ))}
